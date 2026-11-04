@@ -1,0 +1,458 @@
+[
+ {
+  "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+  "InstLine" : 4,
+  "InstName" : "top",
+  "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+  "ModuleLine" : 4,
+  "ModuleName" : "top",
+  "SubInsts" : [
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 108,
+    "InstName" : "u_pll",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/gowin_pll/gowin_pll.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "Gowin_PLL",
+    "SubInsts" : [
+     {
+      "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/gowin_pll/gowin_pll.v",
+      "InstLine" : 25,
+      "InstName" : "u_pll",
+      "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/gowin_pll/gowin_pll_mod.v",
+      "ModuleLine" : 10,
+      "ModuleName" : "Gowin_PLL_MOD"
+     },
+     {
+      "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/gowin_pll/gowin_pll.v",
+      "InstLine" : 39,
+      "InstName" : "u_pll_init",
+      "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/pll_init.v",
+      "ModuleLine" : 4,
+      "ModuleName" : "PLL_INIT"
+     }
+    ]
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 130,
+    "InstName" : "u_btn",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/ttp229_reader.v",
+    "ModuleLine" : 21,
+    "ModuleName" : "ttp229_reader"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 649,
+    "InstName" : "u_kp1",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/ttp229_reader.v",
+    "ModuleLine" : 21,
+    "ModuleName" : "ttp229_reader"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 672,
+    "InstName" : "g_kb2_on.u_kp2",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/ttp229_reader.v",
+    "ModuleLine" : 21,
+    "ModuleName" : "ttp229_reader"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 684,
+    "InstName" : "u_kp3",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/ttp229_reader.v",
+    "ModuleLine" : 21,
+    "ModuleName" : "ttp229_reader"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[0].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[1].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[2].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[3].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[4].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[5].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[6].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[7].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[8].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[9].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[10].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[11].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[12].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[13].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[14].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[15].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[16].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[17].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[18].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[19].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[20].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[21].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[22].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[23].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[24].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[25].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[26].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[27].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[28].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[29].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[30].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[31].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[32].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[33].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[34].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2307,
+    "InstName" : "gen_ks[35].u_ks",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "ModuleLine" : 5590,
+    "ModuleName" : "ks_string"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2516,
+    "InstName" : "u_rom",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/sine_rom.v",
+    "ModuleLine" : 25,
+    "ModuleName" : "sine_rom"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 2748,
+    "InstName" : "u_trom",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/sine_rom.v",
+    "ModuleLine" : 25,
+    "ModuleName" : "sine_rom"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 4628,
+    "InstName" : "u_ads",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/ads1115_ctrl.v",
+    "ModuleLine" : 11,
+    "ModuleName" : "ads1115_ctrl"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 5037,
+    "InstName" : "u_diag_tx",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_tx.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "uart_tx"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 5294,
+    "InstName" : "u_uart_packet_echo",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_packet_echo.v",
+    "ModuleLine" : 79,
+    "ModuleName" : "uart_packet_echo"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 5489,
+    "InstName" : "u_led_guide",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/led_guide.v",
+    "ModuleLine" : 56,
+    "ModuleName" : "led_guide",
+    "SubInsts" : [
+     {
+      "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/led_guide.v",
+      "InstLine" : 327,
+      "InstName" : "u_i2c",
+      "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/i2c_master.v",
+      "ModuleLine" : 32,
+      "ModuleName" : "i2c_master"
+     }
+    ]
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+    "InstLine" : 5500,
+    "InstName" : "u_lcd",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/lcd_master.v",
+    "ModuleLine" : 55,
+    "ModuleName" : "lcd_master"
+   }
+  ]
+ },
+ {
+  "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart.v",
+  "InstLine" : 1,
+  "InstName" : "uart",
+  "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart.v",
+  "ModuleLine" : 1,
+  "ModuleName" : "uart",
+  "SubInsts" : [
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart.v",
+    "InstLine" : 30,
+    "InstName" : "tx_inst",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_tx.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "uart_tx"
+   },
+   {
+    "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart.v",
+    "InstLine" : 41,
+    "InstName" : "rx_inst",
+    "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_rx.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "uart_rx"
+   }
+  ]
+ },
+ {
+  "InstFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_tx_ads.v",
+  "InstLine" : 6,
+  "InstName" : "uart_tx_ads",
+  "ModuleFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_tx_ads.v",
+  "ModuleLine" : 6,
+  "ModuleName" : "uart_tx_ads"
+ }
+]

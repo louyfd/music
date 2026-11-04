@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module name="top" Register="6945" Alu="3356" Lut="16470" MULTALU27X18="51" MULT12X12="3" MULT27X36="1" Bsram="26" Ssram="38" T_Register="15661(6945)" T_Alu="8209(3356)" T_Lut="29154(16470)" T_MULTALU27X18="51(51)" T_MULT12X12="7(3)" T_MULT27X36="1(1)" T_Bsram="87(26)" T_Ssram="808(38)">
+ <SubModule name="u_pll">
+  <SubModule name="u_pll"/>
+ </SubModule>
+ <SubModule name="u_btn" Register="64" Lut="133" T_Register="64(64)" T_Lut="133(133)"/>
+ <SubModule name="u_kp1" Register="64" Lut="133" T_Register="64(64)" T_Lut="133(133)"/>
+ <SubModule name="g_kb2_on.u_kp2" Register="64" Lut="134" T_Register="64(64)" T_Lut="134(134)"/>
+ <SubModule name="u_kp3" Register="64" Lut="133" T_Register="64(64)" T_Lut="133(133)"/>
+ <SubModule name="gen_ks[0].u_ks" Register="156" Alu="137" Lut="165" Bsram="1" T_Register="156(156)" T_Alu="137(137)" T_Lut="165(165)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[1].u_ks" Register="155" Alu="93" Lut="145" Bsram="1" T_Register="155(155)" T_Alu="93(93)" T_Lut="145(145)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[2].u_ks" Register="155" Alu="93" Lut="144" Bsram="1" T_Register="155(155)" T_Alu="93(93)" T_Lut="144(144)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[3].u_ks" Register="155" Alu="141" Lut="145" Bsram="1" T_Register="155(155)" T_Alu="141(141)" T_Lut="145(145)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[4].u_ks" Register="152" Alu="93" Lut="139" Bsram="1" T_Register="152(152)" T_Alu="93(93)" T_Lut="139(139)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[5].u_ks" Register="155" Alu="137" Lut="150" Bsram="1" T_Register="155(155)" T_Alu="137(137)" T_Lut="150(150)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[6].u_ks" Register="155" Alu="121" Lut="151" Bsram="1" T_Register="155(155)" T_Alu="121(121)" T_Lut="151(151)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[7].u_ks" Register="155" Alu="141" Lut="144" Bsram="1" T_Register="155(155)" T_Alu="141(141)" T_Lut="144(144)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[8].u_ks" Register="155" Alu="121" Lut="152" Bsram="1" T_Register="155(155)" T_Alu="121(121)" T_Lut="152(152)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[9].u_ks" Register="155" Alu="121" Lut="148" Bsram="1" T_Register="155(155)" T_Alu="121(121)" T_Lut="148(148)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[10].u_ks" Register="155" Alu="109" Lut="144" Bsram="1" T_Register="155(155)" T_Alu="109(109)" T_Lut="144(144)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[11].u_ks" Register="134" Alu="59" Lut="139" Bsram="1" T_Register="134(134)" T_Alu="59(59)" T_Lut="139(139)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[12].u_ks" Register="152" Alu="109" Lut="140" Bsram="1" T_Register="152(152)" T_Alu="109(109)" T_Lut="140(140)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[13].u_ks" Register="152" Alu="125" Lut="140" Bsram="1" T_Register="152(152)" T_Alu="125(125)" T_Lut="140(140)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[14].u_ks" Register="152" Alu="93" Lut="141" Bsram="1" T_Register="152(152)" T_Alu="93(93)" T_Lut="141(141)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[15].u_ks" Register="152" Alu="121" Lut="146" Bsram="1" T_Register="152(152)" T_Alu="121(121)" T_Lut="146(146)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[16].u_ks" Register="149" Alu="109" Lut="136" Bsram="1" T_Register="149(149)" T_Alu="109(109)" T_Lut="136(136)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[17].u_ks" Register="152" Alu="137" Lut="147" Bsram="1" T_Register="152(152)" T_Alu="137(137)" T_Lut="147(147)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[18].u_ks" Register="152" Alu="93" Lut="142" Bsram="1" T_Register="152(152)" T_Alu="93(93)" T_Lut="142(142)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[19].u_ks" Register="152" Alu="157" Lut="138" Bsram="1" T_Register="152(152)" T_Alu="157(157)" T_Lut="138(138)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[20].u_ks" Register="152" Alu="121" Lut="147" Bsram="1" T_Register="152(152)" T_Alu="121(121)" T_Lut="147(147)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[21].u_ks" Register="152" Alu="118" Lut="150" Bsram="1" T_Register="152(152)" T_Alu="118(118)" T_Lut="150(150)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[22].u_ks" Register="152" Alu="109" Lut="138" Bsram="1" T_Register="152(152)" T_Alu="109(109)" T_Lut="138(138)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[23].u_ks" Register="149" Alu="109" Lut="136" Bsram="1" T_Register="149(149)" T_Alu="109(109)" T_Lut="136(136)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[24].u_ks" Register="149" Alu="141" Lut="136" Bsram="1" T_Register="149(149)" T_Alu="141(141)" T_Lut="136(136)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[25].u_ks" Register="149" Alu="125" Lut="135" Bsram="1" T_Register="149(149)" T_Alu="125(125)" T_Lut="135(135)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[26].u_ks" Register="149" Alu="93" Lut="135" Bsram="1" T_Register="149(149)" T_Alu="93(93)" T_Lut="135(135)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[27].u_ks" Register="149" Alu="121" Lut="142" Bsram="1" T_Register="149(149)" T_Alu="121(121)" T_Lut="142(142)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[28].u_ks" Register="146" Alu="141" Lut="133" Bsram="1" T_Register="146(146)" T_Alu="141(141)" T_Lut="133(133)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[29].u_ks" Register="149" Alu="121" Lut="143" Bsram="1" T_Register="149(149)" T_Alu="121(121)" T_Lut="143(143)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[30].u_ks" Register="149" Alu="125" Lut="134" Bsram="1" T_Register="149(149)" T_Alu="125(125)" T_Lut="134(134)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[31].u_ks" Register="149" Alu="125" Lut="134" Bsram="1" T_Register="149(149)" T_Alu="125(125)" T_Lut="134(134)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[32].u_ks" Register="149" Alu="109" Lut="136" Bsram="1" T_Register="149(149)" T_Alu="109(109)" T_Lut="136(136)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[33].u_ks" Register="149" Alu="109" Lut="136" Bsram="1" T_Register="149(149)" T_Alu="109(109)" T_Lut="136(136)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[34].u_ks" Register="149" Alu="109" Lut="134" Bsram="1" T_Register="149(149)" T_Alu="109(109)" T_Lut="134(134)" T_Bsram="1(1)"/>
+ <SubModule name="gen_ks[35].u_ks" Register="146" Alu="173" Lut="135" Bsram="1" T_Register="146(146)" T_Alu="173(173)" T_Lut="135(135)" T_Bsram="1(1)"/>
+ <SubModule name="u_rom" Register="16" Lut="125" T_Register="16(16)" T_Lut="125(125)"/>
+ <SubModule name="u_trom" Register="16" Lut="178" T_Register="16(16)" T_Lut="178(178)"/>
+ <SubModule name="u_ads" Register="112" Lut="144" T_Register="112(112)" T_Lut="144(144)"/>
+ <SubModule name="u_uart_packet_echo" Register="1027" Alu="244" Lut="3425" Bsram="7" Ssram="770" T_Register="1027(1027)" T_Alu="244(244)" T_Lut="3425(3425)" T_Bsram="7(7)" T_Ssram="770(770)"/>
+ <SubModule name="u_led_guide" Register="147" Alu="103" Lut="171" T_Register="174(147)" T_Alu="103(103)" T_Lut="278(171)">
+  <SubModule name="u_i2c" Register="27" Lut="107" T_Register="27(27)" T_Lut="107(107)"/>
+ </SubModule>
+ <SubModule name="u_lcd" Register="1678" Alu="247" Lut="2901" MULT12X12="4" Bsram="18" T_Register="1678(1678)" T_Alu="247(247)" T_Lut="2901(2901)" T_MULT12X12="4(4)" T_Bsram="18(18)"/>
+</Module>

@@ -1,0 +1,73 @@
+{
+ "Device" : "GW5AT-60B",
+ "Files" : [
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/gowin_pll/gowin_pll.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/gowin_pll/gowin_pll_mod.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/pll_init.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/sine_rom.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/top.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/ttp229_reader.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/lcd_master.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_packet_echo.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_rx.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_tx.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/ads1115_ctrl.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/uart_tx_ads.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/i2c_master.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/src/led_guide.v",
+   "Type" : "verilog"
+  }
+ ],
+ "IncludePath" : [
+
+ ],
+ "LoopLimit" : 2000,
+ "ResultFile" : "D:/CODE/FPGA_Gowin/Gowin/Gowin_V1.9.11.03_Education_x64/IDE/bin/Documents/60k/music_player/music/impl/temp/rtl_parser.result",
+ "Top" : "top",
+ "VerilogStd" : "verilog_2001",
+ "VhdlStd" : "vhdl_93"
+}

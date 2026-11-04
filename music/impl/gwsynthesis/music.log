@@ -1,0 +1,178 @@
+GowinSynthesis start
+Running parser ...
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\gowin_pll\gowin_pll.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\gowin_pll\gowin_pll_mod.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\pll_init.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\sine_rom.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\ttp229_reader.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v'
+WARN  (EX3628) : Redeclaration of ANSI port 'wait_mode' is not allowed("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v":650)
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_rx.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_tx.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\ads1115_ctrl.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_tx_ads.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\i2c_master.v'
+Analyzing Verilog file 'D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\led_guide.v'
+Compiling module 'top'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":4)
+Extracting RAM for identifier 'v_lut'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":1293)
+Extracting RAM for identifier 'gain_lut'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":2918)
+Extracting RAM for identifier 'cho_ma'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":3877)
+Extracting RAM for identifier 'cho_mb'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":3878)
+Extracting RAM for identifier 'dly_mem'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":3938)
+Extracting RAM for identifier 'rvb_m1'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":4022)
+Extracting RAM for identifier 'rvb_m2'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":4023)
+Extracting RAM for identifier 'rvb_m3'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":4024)
+Extracting RAM for identifier 'haas_mem'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":4181)
+Extracting RAM for identifier 'score_mem'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":4664)
+Compiling module 'Gowin_PLL'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\gowin_pll\gowin_pll.v":1)
+Compiling module 'Gowin_PLL_MOD'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\gowin_pll\gowin_pll_mod.v":10)
+Compiling module 'PLL_INIT(MULTI_FAC=14)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\pll_init.v":4)
+Compiling module 'ttp229_reader(KEY_BITS=16)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\ttp229_reader.v":21)
+Compiling module 'ttp229_reader'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\ttp229_reader.v":21)
+Compiling module 'ks_string(KEY=0)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=1)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=2)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=3)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=4)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=5)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=6)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=7)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=8)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=9)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=10)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=11)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=12)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=13)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=14)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=15)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=16)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=17)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=18)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=19)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=20)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=21)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=22)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=23)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=24)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=25)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=26)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=27)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=28)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=29)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=30)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=31)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=32)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=33)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=34)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'ks_string(KEY=35)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5590)
+Extracting RAM for identifier 'ram'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5652)
+Compiling module 'sine_rom'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\sine_rom.v":25)
+Extracting RAM for identifier 'sine_q'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\sine_rom.v":49)
+WARN  (EX3791) : Expression size 24 truncated to fit in target size 19("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":3871)
+WARN  (EX3791) : Expression size 25 truncated to fit in target size 17("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":3884)
+Compiling module 'ads1115_ctrl'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\ads1115_ctrl.v":11)
+Compiling module 'uart_tx'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_tx.v":1)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_tx.v":46)
+WARN  (EX3791) : Expression size 5 truncated to fit in target size 4("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_tx.v":77)
+Compiling module 'uart_packet_echo'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v":79)
+Extracting RAM for identifier 'slot_mask'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v":519)
+Extracting RAM for identifier 'slot_dur'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v":574)
+Extracting RAM for identifier 'slot_vel'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v":580)
+Extracting RAM for identifier 'slot_oct0'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v":596)
+Extracting RAM for identifier 'slot_oct1'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v":597)
+Extracting RAM for identifier 'slot_oct2'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v":598)
+Extracting RAM for identifier 'txf_mem'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\uart_packet_echo.v":1778)
+Compiling module 'led_guide'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\led_guide.v":56)
+Compiling module 'i2c_master(CLK_HZ=12500000)'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\i2c_master.v":32)
+Compiling module 'lcd_master'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":55)
+Extracting RAM for identifier 'wave_buf'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":319)
+Extracting RAM for identifier 'liss_fb'("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1163)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":554)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":648)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":675)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":677)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1518)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1522)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1552)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1556)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1581)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1585)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1606)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1610)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1633)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1637)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1715)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1719)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1765)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1769)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1799)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1803)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1848)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1852)
+WARN  (EX3791) : Expression size 27 truncated to fit in target size 26("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1942)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1977)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":1981)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":2029)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":2033)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":2085)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\lcd_master.v":2183)
+NOTE  (EX0101) : Current top module is "top"
+[5%] Running netlist conversion ...
+Running device independent optimization ...
+[10%] Optimizing Phase 0 completed
+[15%] Optimizing Phase 1 completed
+[25%] Optimizing Phase 2 completed
+Running inference ...
+[30%] Inferring Phase 0 completed
+[40%] Inferring Phase 1 completed
+[50%] Inferring Phase 2 completed
+[55%] Inferring Phase 3 completed
+Running technical mapping ...
+[60%] Tech-Mapping Phase 0 completed
+[65%] Tech-Mapping Phase 1 completed
+[75%] Tech-Mapping Phase 2 completed
+[80%] Tech-Mapping Phase 3 completed
+[90%] Tech-Mapping Phase 4 completed
+WARN  (NL0002) : The module "uart_tx" instantiated to "u_diag_tx" is swept in optimizing("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\top.v":5046)
+WARN  (NL0002) : The module "PLL_INIT" instantiated to "u_pll_init" is swept in optimizing("D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\gowin_pll\gowin_pll.v":54)
+[95%] Generate netlist file "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\impl\gwsynthesis\music.vg" completed
+[100%] Generate report file "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\impl\gwsynthesis\music_syn.rpt.html" completed
+GowinSynthesis finish
