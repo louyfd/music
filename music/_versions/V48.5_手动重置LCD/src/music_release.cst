@@ -1,0 +1,153 @@
+//Copyright (C)2014-2025 Gowin Semiconductor Corporation.
+//All rights reserved. 
+//File Title: Physical Constraints file
+//Tool Version: V1.9.11.03 Education
+//Part Number: GW5AT-LV60PG484AC1/I0
+//Device: GW5AT-60
+//Device Version: B
+//Created Time: Mon 10 05 21:20:04 2026
+//
+//=============================================================================
+// ★★★ 实装版（交付用）引脚约束 ★★★  music_release.cst
+//=============================================================================
+//   这一份和 src/music.cst（调试版）是【并列的两份】，随时可切。
+//   ★ 切换方式见 tools/switch_cst.ps1 的说明（改 music.gprj 里的 enable 标志）。
+//   ★ 不要同时让两份都 enable —— 同一个端口会被约束两次。
+//
+//   与调试版的差别【只有下面 8 个引脚】，其余逐字相同：
+//
+//     信号       调试版      实装版     说明
+//     --------   ---------   ---------  --------------------------------------
+//     uart_txd   W22    ->   V18        蓝牙是【开发板这头】的 TX/RX
+//     uart_rxd   W21    ->   G21
+//     scl        C22    ->   B22        琴键1 = 键 0~11
+//     sdo        F18    ->   E18
+//     scl2       E21    ->   C22        琴键2 = 键 12~23
+//     sdo2       E22    ->   F18
+//     scl3       B22    ->   E21        琴键3 = 键 24~35
+//     sdo3       E18    ->   E22
+//
+//   ★ 琴键这三组是【整个轮换了一圈】的（1<-3、2<-1、3<-2），
+//     因为实装 PCB 的走线就是这么布的。
+//   ★ 信号名和 RTL 的对应关系没变：
+//       scl/sdo   = kp1 = 键 0~11      scl2/sdo2 = kp2 = 键 12~23
+//       scl3/sdo3 = kp3 = 键 24~35
+//
+//   ★ 没被提到的引脚【一律保持调试版原样】，包括：
+//       led(U12/READY) / led_glide(G11/DONE)  这两颗"专用配置脚放开当 GPIO"
+//       lat_key(C19) / lat_pcm(C18)           延迟测量测试脚
+//       led_scl(V17) / led_sda(W17)           36 颗 LED 的第二路 I2C
+//     → 所以 build 脚本里那三行
+//         set_option -use_done_as_gpio  1
+//         set_option -use_ready_as_gpio 1
+//         set_option -use_cpu_as_gpio   1
+//       【不用改】，实装版照样要写 1。
+//
+//   ★ 每路端口的 IO_PORT 属性（电平/上下拉/驱动/所在 bank）全部照抄调试版。
+//     V18 / G21 / E18 / B22 / C22 / F18 / E21 / E22 这些脚和原来那批
+//     都在同一片 3.3V bank 上，所以 LVCMOS33 / BANK_VCCIO=3.3 成立
+//     （★ 这一条只有构建通过才能算数，已在本版构建中核对）。
+//=============================================================================
+
+IO_LOC "lcd_blk" F19;
+IO_PORT "lcd_blk" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lcd_cs" W20;
+IO_PORT "lcd_cs" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lcd_dc" W19;
+IO_PORT "lcd_dc" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lcd_mosi" F20;
+IO_PORT "lcd_mosi" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lcd_sck" D22;
+IO_PORT "lcd_sck" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+// ---- ★ 实装版改动 1/8：蓝牙 TX（开发板这头）W22 -> V18 ----
+IO_LOC "uart_txd" V18;
+IO_PORT "uart_txd" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "led_glide" G11;
+IO_PORT "led_glide" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "led" U12;
+IO_PORT "led" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "din" A15;
+IO_PORT "din" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lck" A16;
+IO_PORT "lck" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "bck" A20;
+IO_PORT "bck" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "scl_btn" E13;
+IO_PORT "scl_btn" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+// ---- ★ 实装版改动 2/8：琴键3（键 24~35）B22 -> E21 ----
+IO_LOC "scl3" E21;
+IO_PORT "scl3" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+// ---- ★ 实装版改动 3/8：琴键2（键 12~23）E21 -> C22 ----
+IO_LOC "scl2" C22;
+IO_PORT "scl2" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+// ---- ★ 实装版改动 4/8：琴键1（键 0~11）C22 -> B22 ----
+IO_LOC "scl" B22;
+IO_PORT "scl" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "i2c_sda" V19;
+IO_PORT "i2c_sda" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "i2c_scl" G22;
+IO_PORT "i2c_scl" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "sdo_btn" E14;
+IO_PORT "sdo_btn" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+// ---- ★ 实装版改动 5/8：琴键3（键 24~35）E18 -> E22 ----
+IO_LOC "sdo3" E22;
+IO_PORT "sdo3" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+// ---- ★ 实装版改动 6/8：琴键2（键 12~23）E22 -> F18 ----
+IO_LOC "sdo2" F18;
+IO_PORT "sdo2" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+// ---- ★ 实装版改动 7/8：琴键1（键 0~11）F18 -> E18 ----
+IO_LOC "sdo" E18;
+IO_PORT "sdo" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+// ---- ★ 实装版改动 8/8：蓝牙 RX（开发板这头）W21 -> G21 ----
+IO_LOC "uart_rxd" G21;
+IO_PORT "uart_rxd" IO_TYPE=LVCMOS33 PULL_MODE=NONE BANK_VCCIO=3.3;
+IO_LOC "rst_n" D1;
+IO_PORT "rst_n" IO_TYPE=LVCMOS18 PULL_MODE=UP BANK_VCCIO=1.8;
+IO_LOC "clk_50m" V22;
+IO_PORT "clk_50m" IO_TYPE=LVCMOS33 PULL_MODE=NONE BANK_VCCIO=3.3;
+
+//=============================================================================
+// ★★ V41 新增：LED 演奏指引的第二路 I2C ★★
+//
+//   ★★ 本次只【追加】下面这两组，上面一行都没改 ★★
+//
+//   V17 / W17 在本文件里没有被任何别的端口占用（是空脚），
+//   而且已经【实测确认】：独立工程 D:\...\Documents\60k\LEDs 就是用
+//   这两个脚把 36 颗灯点亮的。
+//
+//   ★ 注意和 ADS1115 那条 I2C 区分开（那是 i2c_scl=G22 / i2c_sda=V19）：
+//       ADS1115（摇杆）: i2c_scl / i2c_sda
+//       LED 指引        : led_scl / led_sda   ← 本节这两根
+//
+//   ★ PULL_MODE=UP：I2C 是开漏总线，这两个脚必须有上拉才有高电平。
+//     板上有外部 4.7k 上拉（独立工程已验证），这里写 UP 只是兜底。
+//=============================================================================
+IO_LOC "led_scl" V17;
+IO_PORT "led_scl" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "led_sda" W17;
+IO_PORT "led_sda" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=8 BANK_VCCIO=3.3;
+
+//=============================================================================
+// ★★ V44 新增：延迟测量测试脚（外部示波器）★★
+//
+//   ★★ 本次只【追加】下面两组，上面一行都没改 ★★
+//
+//   C19 -> lat_key ：琴键端（示波器 CH1）—— FPGA 检测到"有键刚按下"那一拍
+//   C18 -> lat_pcm ：PCM 端（示波器 CH2）—— 样本由 0 变非 0 那一拍
+//   第三通道直接夹喇叭/DAC 模拟输出，不用加脚。
+//
+//   C18 / C19 在本文件里原本没有被任何端口占用（是空脚）。
+//
+//   DRIVE=8：这两个脚只驱动示波器高阻探头，8mA 足够。
+//   PULL_MODE=NONE：它们是【输出】，不需要上下拉（下拉反而让空闲电平不明确）。
+//
+//   ★ 实装版里【保留】这两个脚 —— 用户没提要动它们。
+//     如果交付时要把 C18/C19 腾出来接别的东西，注意：
+//     光从这份 cst 里删掉【不行】，端口还在 RTL 里，工具会自动布局到
+//     任意 IO（有警告但能过），落点不可控。要么像现在这样留着，
+//     要么 RTL 那边也一起处理。
+//=============================================================================
+IO_LOC "lat_key" C19;
+IO_PORT "lat_key" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lat_pcm" C18;
+IO_PORT "lat_pcm" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
