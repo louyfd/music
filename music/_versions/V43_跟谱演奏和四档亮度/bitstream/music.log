@@ -1,0 +1,30 @@
+Reading netlist file: "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\impl\gwsynthesis\music.vg"
+Parsing netlist file "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\impl\gwsynthesis\music.vg" completed
+Processing netlist completed
+Reading constraint file: "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\src\music.cst"
+Physical Constraint parsed completed
+Running placement......
+[10%] Placement Phase 0 completed
+[20%] Placement Phase 1 completed
+[30%] Placement Phase 2 completed
+[50%] Placement Phase 3 completed
+Running routing......
+[60%] Routing Phase 0 completed
+[70%] Routing Phase 1 completed
+[80%] Routing Phase 2 completed
+WARN  (PR1014) : Generic routing resource will be used to clock signal 'clk_50m_d' by the specified constraint. And then it may lead to the excessive delay or skew
+[90%] Routing Phase 3 completed
+Running timing analysis......
+[95%] Timing analysis completed
+Placement and routing completed
+Bitstream generation in progress......
+Bitstream generation completed
+Running power analysis......
+[100%] Power analysis completed
+Generate file "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\impl\pnr\music.power.html" completed
+Generate file "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\impl\pnr\music.pin.html" completed
+Generate file "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\impl\pnr\music.rpt.html" completed
+Generate file "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\impl\pnr\music.rpt.txt" completed
+Generate file "D:\CODE\FPGA_Gowin\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\Documents\60k\music_player\music\impl\pnr\music.tr.html" completed
+Fri Oct  9 19:16:07 2026
+

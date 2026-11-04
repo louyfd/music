@@ -1,0 +1,2799 @@
+`timescale 1ns / 1ps
+//=============================================================================
+// top.v  (Gowin GW5A-25ï¼šå¤šç‰‡ TTP229 ç”µå­ç´ + ADS1115 å››é€šé“é‡‡é›†)
+module top (
+    input  wire        clk_50m,
+    input  wire        rst_n,
+
+    // ---- TTP229ï¼šæ¯ç‰‡ä¸€ç»„ scl/sdo ----
+    output wire        scl,        // ç´é”®1
+    inout  wire        sdo,
+    output wire        scl2,       // ç´é”®2
+    inout  wire        sdo2,
+    // â˜…PAD3-1  ç¬¬ 3 ç‰‡é”®ç›˜ï¼ˆä½Žå…«åº¦ï¼‰ï¼šConsole 60K ä¸Š SCL = A9ï¼ŒSDO = A11
+    output wire        scl3,       // ç´é”®3
+    inout  wire        sdo3,
+    // ---- TTP229（16键，当按钮用）----
+    output wire        scl_btn,
+    inout  wire        sdo_btn,
+    // ---- I2S ----
+    output wire        bck,
+    output wire        lck,
+    output wire        din,
+
+    // ---- LED ----
+    //   â˜…Console 60K åº•æ¿ä¸Šæ²¡æœ‰èœ‚é¸£å™¨ï¼ŒåŽŸæ¥çš„ beep ç«¯å£å·²æ•´ä½“åˆ é™¤
+    //     ï¼ˆè¿žåŒ music.cst é‡Œçš„ A13 çº¦æŸä¸€èµ·åŽ»æŽ‰ï¼‰ã€‚
+    //   â˜…Console 60K çš„æ¿è½½ LED æ˜¯ã€é«˜ç”µå¹³ç‚¹äº®ã€‘ï¼Œæ‰€ä»¥ top é‡Œ
+    //     LED_ACTIVE_LOW å¿…é¡»æ”¹æˆ 1'b0ï¼›å¦‚æžœå“ªå¤©æ¢å›žä½Žç”µå¹³ç‚¹äº®çš„æ¿å­ï¼Œ
+    //     æŠŠå®ƒæ”¹å›ž 1'b1 å³å¯ï¼ˆæžæ€§åªåœ¨é‚£ä¸€å¤„å¤„ç†ï¼Œå†…éƒ¨é€»è¾‘ä¸å˜ï¼‰ã€‚
+    output wire        led,          // U12(=READY ball, 复用为 GPIO)：音色指示
+    output wire        led_glide,    // G11(=DONE  ball, 复用为 GPIO)：滑音/延音指示
+
+    // ---- ADS1115 (I2C) ----
+    //   æ‘‡æ† X/Y å°±æŽ¥åœ¨å®ƒçš„ A0/A1 ä¸Š
+    inout  wire        i2c_scl,
+    inout  wire        i2c_sda,
+
+    // ---- Bluetooth HC-05/06 (UART) ----
+    input  wire        uart_rxd,     // BT TXD
+    output wire        uart_txd,     // BT RXD
+
+    // ---- SPI LCD (ST7789 320x240) ----
+    output wire        lcd_sck,
+    output wire        lcd_mosi,
+    output wire        lcd_dc,
+    output wire        lcd_cs,
+    output wire        lcd_blk
+);
+
+    // â˜…Console 60Kï¼šåº•æ¿æ²¡æœ‰èœ‚é¸£å™¨ï¼Œbeep ç«¯å£å·²åˆ é™¤ï¼Œè¿™é‡Œä¸å†éœ€è¦ä»»ä½•é™éŸ³èµ‹å€¼ã€‚
+    //   ï¼ˆåŽŸæ¥çš„å†™æ³•æ˜¯ assign beep = 1'b0; ä¸” .cst é‡Œçº¦æŸåˆ° A13 = IOT95Aï¼Œ
+    //     å› ä¸ºé‚£å—æ ¸å¿ƒæ¿ A13 ç» Q16 é©±åŠ¨èœ‚é¸£å™¨ï¼Œä¸çº¦æŸæˆé•¿ 0 å°±ä¼šä¸€ç›´å“ã€‚
+    //     Console 60K ä¸Šæ ¹æœ¬æ²¡æœ‰è¿™ä¸ªå™¨ä»¶ï¼Œç«¯å£å’Œçº¦æŸéƒ½ä¸€èµ·åŽ»æŽ‰äº†ã€‚ï¼‰
+
+    //==================================================================
+    // â˜…PAD3-2  é”®æ•°ï¼š3 ç‰‡ = 36ï¼ˆç¬¬ 3 ç‰‡å·²åŠ å…¥ï¼Œä½Žå…«åº¦ï¼‰
+    //==================================================================
+    localparam NUM_KEYS = 36;
+
+    //==================================================================
+    // 摇杆模块（ADS1115 双通道：X 轴 / Y 轴）
+    //
+    //   A0 / AIN0 â†’ X è½´ â†’ ç§»è°ƒï¼šæ•´å°ç´å‡é™åŠéŸ³ï¼Œæ¯è¾¹æœ€å¤š JS_STEPS ä¸ª
+    //   A1 / AIN1 â†’ Y è½´ â†’ æ€»éŸ³é‡ï¼šæ‹‰åˆ°åº•é™éŸ³ï¼ŒæŽ¨åˆ°å¤´ = åŽŸæ¥çš„æ­£å¸¸å“åº¦
+    //
+    //   æ‘‡æ† VCC = 3.3Vã€‚ADS1115 æ˜¯ PGA=Â±4.096V å•ç«¯è¾“å…¥ï¼Œ
+    //   32767 å¯¹åº” 4.096Vï¼Œæ‰€ä»¥ 3.3V æ»¡å¹…è¯»æ•°çº¦ 26400ï¼Œä¸ä¼šé¥±å’Œã€‚
+    //   ä¸‹é¢è¿™å‡ ä¸ªéƒ½æ˜¯ã€åŽŸå§‹ ADC è¯»æ•°ã€‘ï¼Œå•ä½ countã€‚
+    //
+    //   â˜… åŽŸåŽ‹åŠ›ä¼ æ„Ÿå™¨ï¼ˆåŠ›åº¦ï¼‰å·²æ•´ä½“ç§»é™¤ï¼Œè°æ³¢æ¯”ä¾‹æ”¹å›žç”±éŸ³è‰²æ¡£ä½å†³å®šã€‚
+    //==================================================================
+    localparam [15:0] JS_CENTER = 16'd13200;   // æ‘‡æ†å±…ä¸­æ—¶çš„è¯»æ•°
+    // ★ V16：死区 1200 -> 2600。
+    //   原来 1200 看着够大，其实【不够】——因为 JS_XMUL 是在扣掉死区之后才乘的，
+    //   死区宽度被"压缩"了：|偏移| = 1200 时 js_xe = 0 -> 不换档，
+    //   但 |偏移| > 1610 就已经够 js_xn = 1（降/升 1 个半音）。
+    //   也就是说真正的"无移调窗口"只有 ±1610 counts（中心 13200 的 12%），
+    //   摇杆静止时读数只要偏 12%~18% 就会【静止降半音】。
+    //   改成 2600 后实际无移调窗口 = ±(2600 + 410) ≈ ±3010 counts（23%），
+    //   足够覆盖本板摇杆的静止偏差，同时保留完整的 ±12 半音行程。
+    localparam [15:0] JS_DEAD   = 16'd2600;    // 中心死区（counts），防静止跑调
+    localparam [15:0] JS_TRAVEL = 16'd11000;   // ä»Žä¸­ä½æŽ¨åˆ°æžç«¯çš„è¡Œç¨‹
+    localparam integer JS_STEPS = 12;          // æ¯è¾¹æœ€å¤šç§»å‡ ä¸ªåŠéŸ³
+
+    localparam [31:0] JS_XSPAN = JS_TRAVEL - JS_DEAD;                             // 9800
+    localparam [31:0] JS_XMUL  = (JS_STEPS * 32'd65536 + JS_XSPAN/2) / JS_XSPAN;  // 80
+    localparam [31:0] JS_VMUL  = (32'd255 * 32'd65536 + 32'd13200) / 32'd26400;   // 633
+
+
+    //==================================================================
+    // Gowin PLLï¼š50MHz -> 12.5MHz
+    //==================================================================
+    wire clk_audio;
+    wire clk_50m_ext;      // PLL CLKOUT1 = 50MHz : Bluetooth UART + SPI LCD
+
+    Gowin_PLL u_pll (
+        .clkin   (clk_50m),
+        .clkout0 (clk_audio),      // 12.5MHz : audio domain (unchanged)
+        .clkout1 (clk_50m_ext),    // 50MHz   : BT + LCD
+        .mdclk   (1'b0),
+        .reset   (1'b0)            // 60k ç‰ˆ IP å¤šäº†è¿™ä¸ªç«¯å£ï¼ŒæŽ¥ 0ï¼ˆ= åŽŸå·¥ç¨‹ I_RST æŽ¥åœ°ï¼‰
+    );
+    //==================================================================
+    // ★ TTP229 当按钮：第 4 片（16 键模式）
+    //   键1 -> 滑音开关（代替 AA13）
+    //   键2 -> 延音开关（代替 AB13）
+    //   键3 -> 波形 / 频谱显示切换
+    //   键4 -> 音色切换
+    //   键5 -> 颤音（Tremolo）开关
+    //   键6 -> 延迟（Delay / Echo）开关
+    //   键7~16 暂时不用
+    //
+    //   ★ 这片用 16 位；三片琴键继续用默认 12 位，互不影响。
+    //   ★ key_stable 是【正逻辑】：1 = 按下。
+    //==================================================================
+    wire [15:0] btn_keys;
+
+    ttp229_reader #(.KEY_BITS(16)) u_btn (
+        .clk         (clk_50m),
+        .rst_n       (rst_n),
+        .scl         (scl_btn),
+        .sdo         (sdo_btn),
+        .key_stable  (btn_keys),
+        .rdy_toggle  ()
+    );
+
+    // 按下沿检测（key_stable 内部已有 2/2 去抖，这里只做边沿）
+    reg [15:0] btn_keys_d;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) btn_keys_d <= 16'd0;
+        else        btn_keys_d <= btn_keys;
+    end
+    wire [15:0] btn_new = btn_keys & ~btn_keys_d;   // 单拍脉冲
+
+    wire btn_glide   = btn_new[0];   // 键 1
+    wire btn_sustain = btn_new[1];   // 键 2
+    // ★ 临时改：键 3 改成切波形图，键 4 才是切音色
+    wire btn_wave    = btn_new[2];   // 键 3 -> 波形切换
+    wire btn_timbre  = btn_new[3];   // 键 4 -> 音色切换
+    //==================================================================
+
+    // ★ 只认 TTP229 键2
+    reg sustain_on;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n)            sustain_on <= 1'b0;
+        else if (btn_sustain)  sustain_on <= ~sustain_on;
+    end
+
+    // ★ 只认 TTP229 键3
+    wire timbre_cycle = btn_timbre;
+
+    //   板载按键是【瞬时按键】，按一下翻转一次，不再需要长按 2 秒。
+    //   ★ 极性：AA13 / AB13 是【板载按键】：bank9 / 1.5V / 内部上拉 / 按下 = 低电平。
+    //   led_glide 直接指示 glide_en（亮 = 滑音开）。
+    // ★ 只认 TTP229 键1
+    wire glide_toggle = btn_glide;
+
+    reg glide_en;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n)            glide_en <= 1'b0;       // 上电默认【滑音关】，按 AA13 打开
+        else if (glide_toggle) glide_en <= ~glide_en;
+    end
+
+    reg [0:0] timbre_50m;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) begin
+            timbre_50m <= 1'b0;
+        end else if (timbre_cycle) begin
+            timbre_50m <= ~timbre_50m;      // 0 <-> 1
+        end
+    end
+    //==================================================================
+    // ★ TTP229 键4：频谱 / 波形 切换
+    //
+    //   那块 16 键按钮板是【宏维微电 HW-136 / TTP229-BSF 16路触摸模块】，
+    //   它自己的 Arduino 例程 key_16out.ino 里是这么编号的：
+    //        DATA |= digitalRead(SDO) << i;         // 先出 bit0
+    //        if ((h & (1 << i)) == 0) 按键 (i+1)    // 注意例程把这模块的读数取反用
+    //   本工程 ttp229_reader 里已经写成 key = ~DATA，所以
+    //        btn_keys[n] = 模块丝印上的第 (n+1) 个触摸区
+    //   即 bit0 = 按钮1，bit1 = 按钮2，bit2 = 按钮3，bit3 = 按钮4。
+    //   ★ 模块必须在 16 键模式：板上 P1 那排针里【数字 3 处的两个排针要短接】
+    //     （见 D:\电容按键16\A1-6-3L\例程源码\arduino例程\接线说明.txt），
+    //     不短接默认是 8 键模式，只有 bit0~bit7 有效。
+    //==================================================================
+    //   ★ 2026-10-04：按钮4(bit3) 实测无反应，改用【按钮5 = bit4】。
+    //     按钮 4 和 5 的触摸区接在 TTP229 同一组灵敏度电容 cj1 上，
+    //     若哪天按钮4 好了，把 [4] 改回 [3] 即可。
+
+    reg wave_mode;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n)        wave_mode <= 1'b0;    // 上电默认频谱
+        else if (btn_wave) wave_mode <= ~wave_mode;
+    end
+
+    //==================================================================
+    // ★★ 颤音（Tremolo）效果器开关：按【按钮5】= btn_keys[4] ★★
+    //
+    //   ★ 按钮分配（16 键触摸模块）：
+    //       按钮1(bit0)=滑音   按钮2(bit1)=延音
+    //       按钮3(bit2)=波形   按钮4(bit3)=音色（实测无反应的那颗）
+    //       按钮5(bit4)=颤音  ← 本次新增
+    //
+    //   这里只做"按一下翻转一次"；效果器本体在音频域，
+    //   开关状态用两级同步器送过去（慢信号，2 级足够）。
+    //==================================================================
+    //   ★ 按钮5/6 各管一个效果器，所以这里必须【一位对一位】，
+    //     不能再像上一版那样用 |btn_new[15:4] 兜底（那样按6 会开成颤音）。
+    wire btn_trem = btn_new[4];              // 按钮 5 -> 颤音
+    wire btn_dly  = btn_new[5];              // 按钮 6 -> 延迟
+
+    reg trem_on;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n)        trem_on <= 1'b0;          // 上电默认【关】
+        else if (btn_trem) trem_on <= ~trem_on;      // 按一下开，再按一下关
+    end
+
+    reg dly_on;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n)       dly_on <= 1'b0;            // 上电默认【关】
+        else if (btn_dly) dly_on <= ~dly_on;         // 按一下开，再按一下关
+    end
+    //------------------------------------------------------------------
+    // LED æŒ‡ç¤ºå½“å‰éŸ³è‰²ï¼šæ…¢é—ª / å¿«é—ª / åŒé—ª / å¸¸äº®
+    //------------------------------------------------------------------
+    reg [23:0] led_cnt;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) led_cnt <= 24'd0;
+        else        led_cnt <= led_cnt + 1'b1;
+    end
+
+    reg led_out;
+    always @(*) begin
+        case (timbre_50m)
+            1'b0: led_out = led_cnt[23];          // 慢闪 = 纯基波
+            1'b1: led_out = led_cnt[21];          // 快闪 = 基波 + 2 次
+            default: led_out = led_cnt[23];
+        endcase
+    end
+
+    //------------------------------------------------------------------
+    // ★★ V16：led / led_glide 直接复用板上 DONE / READY 两个球 ★★
+    //   用户明确要求：不用管板上那套"配置状态"指示电路，直接把这两个球当 LED 用。
+    //     G11 = DONE   -> led_glide（滑音/延音指示）
+    //     U12 = READY  -> led
+    //   代价与前提：
+    //     1) 必须让工具把 DONE / READY 放开成普通 IO，见 rebuild/build 脚本：
+    //          set_option -use_done_as_gpio  1
+    //          set_option -use_ready_as_gpio 1
+    //        写 0（保持专用脚）会直接报
+    //          ERROR (PR2017) ... the location is a dedicated pin (DONE/READY)
+    //     2) 放开之后，板上那颗由 DONE/READY 驱动的配置指示就不再反映配置状态了。
+    //   极性：板上是 LED + 限流电阻接法，若实测"亮灭反了"，把下面
+    //         LED_ACTIVE_LOW 取反即可（改动只在这一处）。
+    //        （25k 原板的 LED 是高电平点亮。）
+    //------------------------------------------------------------------
+    localparam LED_ACTIVE_LOW = 1'b1;      // Console 60K = 1ï¼ˆä½Žç”µå¹³ç‚¹äº®ï¼‰
+
+    assign led = LED_ACTIVE_LOW ? ~led_out : led_out;
+
+    //------------------------------------------------------------------
+    //   ★ 顺手把颤音状态并进这颗灯：按一下【按钮5】灯就变，
+    //     用来确认"按钮到底读到没有"（不想要就把 | trem_on 去掉）。
+    assign led_glide = LED_ACTIVE_LOW ? ~(glide_en | sustain_on | trem_on | dly_on)
+                                      :  (glide_en | sustain_on | trem_on | dly_on);
+
+    //------------------------------------------------------------------
+    // éŸ³è‰²åˆ‡æ¢è„‰å†²ï¼ˆç¿»è½¬æ²¿ï¼‰ï¼Œè·¨æ—¶é’Ÿåˆ°éŸ³é¢‘åŸŸ
+    //------------------------------------------------------------------
+    reg timbre_toggle_50m;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) timbre_toggle_50m <= 1'b0;
+        else if (timbre_cycle) timbre_toggle_50m <= ~timbre_toggle_50m;
+    end
+
+    //==================================================================
+    // 50MHz åŸŸï¼šTTP229 è¯»å–ï¼ˆæ¯ç‰‡ä¸€ä¸ªå®žä¾‹ï¼Œå¹¶è¡Œç‹¬ç«‹è¿è¡Œï¼‰
+    //==================================================================
+    wire [11:0] kp1, kp2, kp3;
+    wire        rdy1, rdy2, rdy3;
+
+    ttp229_reader u_kp1 (
+        .clk         (clk_50m),
+        .rst_n       (rst_n),
+        .scl         (scl),
+        .sdo         (sdo),
+        .key_stable  (kp1),
+        .rdy_toggle  (rdy1)
+    );
+
+    // â˜… Console 60K ç‰ˆï¼šé”®ç›˜2 å·²ä¿®å¥½ï¼Œä¸‰ç‰‡å…¨éƒ¨å¯ç”¨ã€‚
+    //   ä¸‡ä¸€å“ªå¤©æŸä¸€ç‰‡åˆåæŽ‰ï¼ŒæŠŠ KB2_DISABLED æ”¹å›ž 1'b1 å°±èƒ½æ•´æ®µé™é»˜éš”ç¦»ï¼š
+    //     Â· scl2 æ’è¾“å‡º 0 â€”â€” TTP229 çš„ SCL ç©ºé—²æœ¬æ¥å°±æ˜¯ä½Žï¼Œä¸ä¼šé¡¶ç‰›
+    //     Â· sdo2 ä¸å†ç”±è¯»å–å™¨é©±åŠ¨ï¼Œåªå½“ä¸€ä¸ªè¾“å…¥ç”¨
+    //     Â· kp2 æ’ 0 â€”â€” è¯¥ç‰‡æ°¸è¿œ"æ²¡æœ‰é”®æŒ‰ä¸‹"ï¼Œä¸ä¼šå†å‡ºçŽ° 16 ä¸ªå¹½çµéŸ³
+    localparam KB2_DISABLED = 1'b0;
+
+    generate
+        if (KB2_DISABLED) begin : g_kb2_off
+            assign scl2 = 1'b0;
+            assign kp2  = 12'd0;
+            assign rdy2 = 1'b0;
+            wire sdo2_dummy = sdo2;      // ä¿ç•™è¾“å…¥ç¼“å†²ï¼ˆå¼•è„šæŒ‰ .cst çš„ PULL_MODE è®¾ç½®ï¼‰
+        end else begin : g_kb2_on
+            ttp229_reader u_kp2 (
+                .clk         (clk_50m),
+                .rst_n       (rst_n),
+                .scl         (scl2),
+                .sdo         (sdo2),
+                .key_stable  (kp2),
+                .rdy_toggle  (rdy2)
+            );
+        end
+    endgenerate
+
+    // â˜…PAD3-3  ç¬¬ 3 ç‰‡é”®ç›˜ï¼ˆä½Žå…«åº¦ï¼‰ï¼šSCL = L11ï¼ŒSDO = E10
+    ttp229_reader u_kp3 (
+        .clk         (clk_50m),
+        .rst_n       (rst_n),
+        .scl         (scl3),
+        .sdo         (sdo3),
+        .key_stable  (kp3),
+        .rdy_toggle  (rdy3)
+    );
+
+    //==================================================================
+    // æŒ‰é”®æŽ©ç ï¼šä½Žä½ = ç´é”®1ï¼Œä¸­é—´ = ç´é”®2ï¼Œé«˜ä½ = ç´é”®3
+    //==================================================================
+    wire [NUM_KEYS-1:0] pressed_mask = {kp3, kp2, kp1};
+
+    //==================================================================
+    // æ–°æŒ‰é”®æ£€æµ‹ï¼šä»»ä¸€ç‰‡è¯»åˆ°æ–°æ•°æ®å°±é‡æ–°æ¯”å¯¹ä¸€æ¬¡ï¼Œ
+    // å‡ºçŽ°"æ–°æŒ‰ä¸‹çš„é”®"å°±ç¿»è½¬ event_toggleï¼ˆä¾›éŸ³é¢‘åŸŸå†³å®šæ˜¯"æ•´ä½“è½½å…¥"
+    // è¿˜æ˜¯"åªå…è®¸æ¾å¼€"ï¼‰ã€‚
+    //==================================================================
+    // NOTE: the old "new-key event" generator (rdy edge detect + event_toggle)
+    // was removed together with the key_mask rewrite above.  It existed only to
+    // make the audio domain "load key_mask on a new key event"; now the audio
+    // domain simply 2-stage-syncs the round-stable snapshot (pressed_mask),
+    // which is both simpler and race-free.
+    //
+    // rdy1/rdy2/rdy3 are still produced by the ttp229_reader instances but are
+    // no longer needed by the logic; they stay unconnected/harmless.
+
+    //==================================================================
+    // è·¨æ—¶é’Ÿï¼šæŒ‰é”®äº‹ä»¶ 50MHz -> 12.5MHz
+    //==================================================================
+    // (event_toggle_d1/d2/d3 已随 key_mask 重写一并删除)
+
+    //==================================================================
+    // ★★ 按键跨时钟域：直接两级同步"整轮扫描内恒定"的稳定键值快照 ★★
+    //
+    //   （照 music_test0 的修复结论重写，这是"按一次响两次/响一片"的主因）
+    //
+    //   〖原来错在哪〗
+    //   原实现：
+    //       pressed_mask = {kp3,kp2,kp1}，而 kp 来自 ttp229_reader 里
+    //       随轮的 ~DATA（DATA 在 IDLE 态被清零 → 那 0.25ms 里全 1）；
+    //       50MHz 域再靠 rdy 边沿产生一个 event_toggle 脉冲，
+    //       脉冲位置正好压在 DATA 被清零的窗口上；
+    //       音频域用 key_event_audio 去 load key_mask。
+    //   一旦脉冲压在清零之后，key_mask 就被 load 成【全 1】，
+    //   36 路包络一起 Attack 一下 —— 听感是一记闷响/和弦咔声，
+    //   紧跟在正常音头后面（就是所谓"第二声"）。
+    //
+    //   〖现在怎么改〗
+    //   ttp229_reader 已经改成只在 WAIT_2MS 第一拍锁存快照 key_stable
+    //   （整轮扫描期内恒定，且做过 2/2 去抖），所以这里【直接两级同步】
+    //   就够：既不会加进毛刺，松手也能立即跟上。
+    //
+    //   ★ 顺手修掉一个隐藏 bug：原来同一轮里两个键同时新按下时，
+    //     event_toggle 连翻两次、净变化为 0 → 音频域收不到脉冲 →
+    //     那两个音直接漏响。改成快照直通后这个问题自然消失。
+    //
+    //   ★ 自动演奏 / MIDI 音符不再并进 key_mask 的载入，
+    //     改为在音频域直接 OR 进来（见下面的 key_mask 声明）。
+    //==================================================================
+
+    //------------------------------------------------------------------
+    // è·¨æ—¶é’Ÿï¼šéŸ³è‰²ç¿»è½¬æ²¿ 50MHz -> 12.5MHz
+    //------------------------------------------------------------------
+    reg tt_d1, tt_d2, tt_d3;
+    reg       timbre_audio;
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            tt_d1        <= 1'b0;
+            tt_d2        <= 1'b0;
+            tt_d3        <= 1'b0;
+            timbre_audio <= 1'b0;
+        end else begin
+            tt_d1 <= timbre_toggle_50m;
+            tt_d2 <= tt_d1;
+            tt_d3 <= tt_d2;
+            if (tt_d2 ^ tt_d3)
+                timbre_audio <= ~timbre_audio;   // 翻转，不再 +1
+        end
+    end
+
+    // ★ 音色只由【按钮4】短按循环决定（与 25K K44 一致）。
+    //   摇杆 X 轴在 25K 上是【移调】，不是音色 —— 不要改这个语义。
+
+    //==================================================================
+    reg [NUM_KEYS-1:0] pressed_mask_sync1, pressed_mask_sync2;
+
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            pressed_mask_sync1 <= {NUM_KEYS{1'b0}};
+            pressed_mask_sync2 <= {NUM_KEYS{1'b0}};
+        end else begin
+            pressed_mask_sync1 <= pressed_mask;
+            pressed_mask_sync2 <= pressed_mask_sync1;
+        end
+    end
+
+    // X: replace event_toggle-based key_mask with direct 2-stage sync of the
+    //    stable snapshot.  pressed_mask = {kp3,kp2,kp1}, and each kp is now
+    //    the round-stable key_stable snapshot from ttp229_reader.
+    //
+    //    The old event_toggle scheme latched key_mask exactly on the window
+    //    where DATA is cleared in IDLE state (~0.25ms of all-ones), which
+    //    loaded a whole slab of keys at once -- the "one press, two sounds"
+    //    / chord-thump root cause.  It also silently dropped notes when two
+    //    keys in the same round were newly pressed (toggle flipped twice).
+    //
+    //    The snapshot only changes once per 2.26ms scan, so two sync flops
+    //    are plenty; the ~8ms release debounce in the envelope is the backstop.
+    //
+    //    key_mask reflects physical keys only; auto-play / MIDI notes are OR'd
+    //    in directly below.
+    // ★ 蓝牙按键掩码跨到音频域（两级同步）
+    reg [35:0] bt_keys_s1, bt_keys_s2;
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            bt_keys_s1 <= 36'd0;
+            bt_keys_s2 <= 36'd0;
+        end else begin
+            bt_keys_s1 <= bt_keys;
+            bt_keys_s2 <= bt_keys_s1;
+        end
+    end
+    wire [35:0] bt_keys_aud = bt_keys_s2;
+    wire [NUM_KEYS-1:0] key_mask = pressed_mask_sync2 | auto_keys_aud | midi_keys_aud | bt_keys_aud;
+
+    // å»¶éŸ³å¼€å…³è·¨åˆ°éŸ³é¢‘åŸŸï¼ˆæ…¢ä¿¡å·ï¼Œ2 çº§åŒæ­¥è¶³å¤Ÿï¼‰
+    reg sustain_s1, sustain_s2;
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            sustain_s1 <= 1'b0;
+            sustain_s2 <= 1'b0;
+        end else begin
+            sustain_s1 <= sustain_on;
+            sustain_s2 <= sustain_s1;
+        end
+    end
+    wire sustain_on_audio = sustain_s2;
+
+    // ---- 颤音开关跨到音频域（慢信号，两级同步足够）----
+    reg trem_s1, trem_s2;
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            trem_s1 <= 1'b0;
+            trem_s2 <= 1'b0;
+        end else begin
+            trem_s1 <= trem_on;
+            trem_s2 <= trem_s1;
+        end
+    end
+    wire trem_on_audio = trem_s2;
+
+    // ---- 延迟开关跨到音频域（慢信号，两级同步足够）----
+    reg dly_s1, dly_s2;
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            dly_s1 <= 1'b0;
+            dly_s2 <= 1'b0;
+        end else begin
+            dly_s1 <= dly_on;
+            dly_s2 <= dly_s1;
+        end
+    end
+    wire dly_on_audio = dly_s2;
+
+    //==================================================================
+    // æ‘‡æ†ï¼šADS1115 A0 = X è½´ï¼ˆç§»è°ƒï¼‰ï¼ŒA1 = Y è½´ï¼ˆæ€»éŸ³é‡ï¼‰
+    //
+    //   â˜… åŽŸåŽ‹åŠ›ä¼ æ„Ÿå™¨ï¼ˆåŠ›åº¦ + å³°å€¼é”å­˜ï¼‰å·²æ•´ä½“ç§»é™¤ã€‚
+    //   ADC æ˜¯å•ç«¯è¾“å…¥ã€PGA=Â±4.096Vï¼Œ32767 å¯¹åº” 4.096Vï¼›
+    //   æ‘‡æ† 3.3V ä¾›ç”µ â†’ æ»¡å¹…è¯»æ•°çº¦ 26400ï¼Œä¸ä¼šé¥±å’Œã€‚
+    //   A0/A1 çš„åŽŸå§‹è¯»æ•°åŽŸæ ·ä¸ŠæŠ¥åˆ° VOFA+ ç¬¬ 1ã€2 è·¯ï¼Œç¬¬ä¸€æ¬¡ä¸Šæ¿å¯ä»¥
+    //   ç›´æŽ¥çœ‹æ³¢å½¢æ¥æ ¡å‡† JS_CENTER / JS_TRAVELã€‚
+    //==================================================================
+    wire [15:0] ain0_data, ain1_data, ain2_data, ain3_data;
+
+    // â˜… æš‚æ—¶æ²¡æŽ¥æ‘‡æ†æ—¶ï¼ŒæŠŠè¿™ä¸ªæ”¹æˆ 1'b1ï¼š
+    //   å¿½ç•¥æ‘‡æ†è¾“å…¥ï¼Œå›ºå®š"åŽŸè°ƒ + æ»¡éŸ³é‡"ï¼Œå…ˆéªŒè¯ç´æœ¬èº«æ­£å¸¸ã€‚
+    //   ï¼ˆå› ä¸º Y è½´è¯»æ•°å¦‚æžœé£˜åˆ° 0ï¼ŒéŸ³é‡å°±æ˜¯ 0ï¼Œä¼šè¡¨çŽ°ä¸ºå®Œå…¨æ²¡å£°ï¼‰
+    // ★★ V16 音高修正（根因）★★
+    //
+    //   现象：琴键1 最左边那个白键（应该是 A2 = 110 Hz）被调音器读成 G#2 = 103.83 Hz。
+    //   证据链：
+    //     110 x trans_ratio[11] = 110 x 61858/65536 = 103.83 Hz  ← 与实测【分毫不差】
+    //     也就是【正好低一个半音】= 摇杆移调档位停在 11 而不是 12（原调）。
+    //   为什么停在 11：X 轴静止时读数不在中心。原来真正的"无移调窗口"只有 ±1610
+    //   counts（见 JS_DEAD 处的推导），而摇杆静止偏差只要落进 1610~2428 这一带，
+    //   算出来就是 js_xn = 1 -> 降一个半音。
+    //   修法：把 JS_DEAD 加宽到 2600，实际无移调窗口变成 ±2948 counts，
+    //         覆盖了 1610~2428 全带 -> 静止时必定回【原调】，音阶恢复正常。
+    //   ★ 所以这里保持 1'b0（摇杆可用）。真要让摇杆彻底不参与，才改成 1'b1。
+    localparam JOY_BYPASS = 1'b0;
+
+    //------------------------------------------------------------------
+    // 1) 50MHz åŸŸï¼šå¯¹ ADS1115 åŽŸå§‹è¯»æ•°åšã€å¤šç‚¹å¹³å‡ã€‘é™å™ª
+    //
+    //   â˜… ä¸ºä»€ä¹ˆè¦æ¢æŽ‰åŽŸæ¥çš„ä¸€é˜¶ IIRï¼š
+    //     ADS1115 æ˜¯ 860SPS å››é€šé“è½®è¯¢ï¼ŒåŒä¸€ä¸ªé€šé“å¤§çº¦æ¯ 4.65ms æ‰æ›´æ–°
+    //     ä¸€æ¬¡ã€‚è€ŒåŽŸæ¥çš„ IIR æ¯ 20.5us å°±èµ°ä¸€æ­¥ã€æ—¶é—´å¸¸æ•°åªæœ‰ 0.66ms â€”â€”
+    //     å®ƒåœ¨ä¸¤æ¬¡ ADC æ›´æ–°ä¹‹é—´æ—©å°±èµ°åˆ°ä½äº†ï¼Œç­‰äºŽåªæŠŠå°é˜¶æŠ¹åœ†äº†ä¸€ç‚¹ï¼Œ
+    //     å¯¹ ADC è‡ªèº«çš„å™ªå£°å‡ ä¹Žæ²¡æœ‰ä»»ä½•æŠ‘åˆ¶ã€‚
+    //     å¹³å‡çª—å£å¿…é¡»è·¨è¿‡è‡³å°‘ä¸¤ä¸ª ADC å‘¨æœŸæ‰çœŸæ­£èµ·ä½œç”¨ã€‚
+    //------------------------------------------------------------------
+
+    // â˜… ä¸ºä»€ä¹ˆä¸ç”¨"æ ‡å‡†æ»‘åŠ¨å¹³å‡"ï¼ˆå­˜ 16 ä¸ªæ ·æœ¬å†å‡æœ€è€çš„é‚£ä¸ªï¼‰ï¼š
+    //   é‚£éœ€è¦ä¸€ä¸ª 16 ç‚¹çš„ç¼“å†²åŒºï¼Œè€Œ Gowin ç»¼åˆå™¨çœ‹åˆ°ç§»ä½é“¾/æ•°ç»„å°±ä¼š
+    //   å¾€åˆ†å¸ƒå¼ RAM ä¸ŠæŽ¨ï¼ŒGW5A åˆä¸æ”¯æŒå®ƒé€‰å‡ºæ¥çš„é‚£ç§è¯»å†™æ¨¡å¼ï¼Œ
+    //   ç›´æŽ¥æŠ¥ PA2122 ç¼–è¯‘å¤±è´¥ï¼ˆæˆ‘è¯•äº†æ•°ç»„å’Œç§»ä½é“¾ä¸¤ç§å†™æ³•éƒ½è¢«æŽ¨æˆ RAMï¼‰ã€‚
+    //
+    //   æ”¹æˆã€åˆ†å—å¹³å‡ã€‘ï¼šè¿žç€ç´¯åŠ  16 ä¸ªç‚¹ï¼Œå†è¾“å‡ºå‡å€¼å¹¶æ¸…é›¶ã€‚
+    //   åŒæ ·æ˜¯ 16 ç‚¹å¹³å‡ã€åŒæ ·è·¨è¿‡ 2.3 ä¸ª ADC å‘¨æœŸï¼Œå™ªå£°æŠ‘åˆ¶æ•ˆæžœä¸€æ ·ï¼Œ
+    //   ä½†åªéœ€è¦ä¸€ä¸ªç´¯åŠ å™¨ + ä¸€ä¸ªè®¡æ•°å™¨ï¼Œç»ä¸å¯èƒ½è¢«æŽ¨æˆ RAMã€‚
+    //   åŒºåˆ«åªæ˜¯æ¯ 10.5ms æ‰åˆ·æ–°ä¸€æ¬¡ï¼ˆæ»‘åŠ¨å¹³å‡æ˜¯è¿žç»­åˆ·æ–°çš„ï¼‰ï¼Œ
+    //   ä¸‹æ¸¸è¿˜æœ‰æ–œå¡å’Œè¿Ÿæ»žï¼Œè¿™ç‚¹å°é˜¶å®Œå…¨è¢«æŠ¹å¹³ã€‚
+    localparam JS_AVG_LOG2 = 4;                       // 2^4 = 16 ç‚¹
+    localparam JS_AVG_N    = (1 << JS_AVG_LOG2);      // 16
+    localparam [15:0] JS_TAP_DIV = 16'd32768;         // æ¯ 655us é‡‡ä¸€ç‚¹
+
+    reg [15:0] js_tdiv;
+    reg [4:0]  js_acnt;
+    reg [20:0] xacc, yacc;
+    reg [15:0] js_x, js_y;
+
+    wire js_tap  = (js_tdiv == JS_TAP_DIV - 1'b1);
+    wire js_done = js_tap && (js_acnt == JS_AVG_N-1);
+
+    // ★ 优化：把「16 点平均」写成显式位选。
+    //   原来是 (xacc + ain0_data) >> JS_AVG_LOG2 再截成 16 位，
+    //   等价于取加法结果的位段 [JS_AVG_LOG2+15 : JS_AVG_LOG2]，
+    //   数值完全一致，只是把静默截断（EX3791 告警）变成写明的位段。
+    wire [20:0] js_xsum = xacc + ain0_data;
+    wire [20:0] js_ysum = yacc + ain1_data;
+
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) begin
+            js_tdiv <= 16'd0;
+            js_acnt <= 5'd0;
+            xacc    <= 21'd0;
+            yacc    <= 21'd0;
+            js_x    <= JS_CENTER;
+            js_y    <= JS_CENTER;
+        end else begin
+            js_tdiv <= js_tap ? 16'd0 : (js_tdiv + 1'b1);
+
+            if (js_tap) begin
+                xacc <= xacc + ain0_data;
+                yacc <= yacc + ain1_data;
+
+                if (js_done) begin
+                    // æœ€åŽä¸€ç‚¹è¿™ä¸€æ‹è¿˜æ²¡è¿›ç´¯åŠ å™¨ï¼Œæ‰€ä»¥è¿™é‡Œè¦æ‰‹åŠ¨è¡¥ä¸Š
+                    js_x    <= js_xsum[JS_AVG_LOG2+15 : JS_AVG_LOG2];
+                    js_y    <= js_ysum[JS_AVG_LOG2+15 : JS_AVG_LOG2];
+                    xacc    <= 21'd0;
+                    yacc    <= 21'd0;
+                    js_acnt <= 5'd0;
+                end else begin
+                    js_acnt <= js_acnt + 1'b1;
+                end
+            end
+        end
+    end
+
+    // æ¯ç§’ 1024 æ‹ï¼ˆâ‰ˆ20.5usï¼‰ä¸€æ¬¡çš„å¿«èŠ‚æ‹ï¼Œç»™ä¸‹é¢çš„æ¢æ¡£è¿Ÿæ»žç”¨
+    reg [9:0] js_tick;
+    wire      js_upd = (js_tick == 10'd1023);
+
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) js_tick <= 10'd0;
+        else        js_tick <= js_upd ? 10'd0 : (js_tick + 1'b1);
+    end
+
+    //------------------------------------------------------------------
+    // 2) X è½´ â†’ ç§»è°ƒæ¡£ä½ 0~24ï¼ˆ12 = åŽŸè°ƒï¼‰
+    //    |x - ä¸­å¿ƒ| å…ˆæ‰£æŽ‰æ­»åŒºï¼Œå†æŒ‰è¡Œç¨‹çº¿æ€§æ˜ å°„æˆ 0~JS_STEPS ä¸ªåŠéŸ³ã€‚
+    //    æ­»åŒºå¿…é¡»ç•™ï¼šæ‘‡æ†é™æ­¢æ—¶è¯»æ•°ä¼šåœ¨å‡ ç™¾ä¸ª count å†…æŠ–ï¼Œ
+    //    ä¸æ‰£æ­»åŒºä¼šä¸€ç›´åœ¨ç›¸é‚»åŠéŸ³ä¹‹é—´è·³ã€‚
+    //------------------------------------------------------------------
+    wire signed [16:0] js_xd = $signed({1'b0, js_x}) - $signed({1'b0, JS_CENTER});
+    wire        [15:0] js_xa = js_xd[16] ? (~js_xd[15:0] + 1'b1) : js_xd[15:0];  // |åç§»|
+    wire        [15:0] js_xe = (js_xa > JS_DEAD) ? (js_xa - JS_DEAD) : 16'd0;    // æ‰£æ­»åŒº
+
+    wire [31:0] js_xn32 = ((js_xe * JS_XMUL) + 32'd32768) >> 16;                 // å››èˆäº”å…¥
+    wire [4:0]  js_xn   = (js_xn32 > JS_STEPS) ? JS_STEPS[4:0] : js_xn32[4:0];
+
+    //------------------------------------------------------------------
+    // â˜… è¿Ÿæ»žï¼šå€™é€‰æ¡£ä½å¿…é¡»è¿žç»­ 8 æ¬¡éƒ½ä¸åŒæ‰çœŸæ­£æ¢æ¡£ï¼ˆ8Ã—20.5us â‰ˆ 164usï¼‰ã€‚
+    //
+    //   æ­»åŒºåªèƒ½æŒ¡ä½"ä¸­å¿ƒé™„è¿‘"çš„æŠ–åŠ¨ï¼ŒæŒ¡ä¸ä½ã€æ ¼å­è¾¹ç•Œã€‘ä¸Šçš„æŠ–åŠ¨ï¼š
+    //   æ‘‡æ†é™æ­¢æ—¶è¯»æ•°æ­£å¥½åŽ‹åœ¨ä¸¤ä¸ªåŠéŸ³çš„ä¸´ç•Œç‚¹ä¸Šï¼Œæ¡£ä½å°±ä¼šä¸¤æ ¼ä¹‹é—´
+    //   æ¥å›žè·³ï¼Œæ¯è·³ä¸€æ¬¡ inc[] å°±è¦é‡ç®— â†’ dcur è·Ÿç€æ¥å›žæ»‘ â†’
+    //   å¬æ„Ÿå°±æ˜¯ä¸€å±‚ç²—ç³™çš„æ²™æ²™å£°ã€‚è¿™æ®µè¿Ÿæ»žä¸“é—¨æ²»å®ƒã€‚
+    //------------------------------------------------------------------
+    reg [4:0] trans_cand, trans_idx;    // 0~24ï¼Œ12 = åŽŸè°ƒ
+    reg [3:0] trans_hcnt;
+
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) begin
+            trans_cand <= 5'd12;
+            trans_idx  <= 5'd12;
+            trans_hcnt <= 4'd0;
+        end else if (js_upd) begin
+            // 1) ç®—å‡ºå€™é€‰æ¡£ä½
+            if (js_xa <= JS_DEAD)   trans_cand <= 5'd12;
+            else if (js_xd[16])     trans_cand <= 5'd12 - js_xn;   // å¾€ä½Žç§»
+            else                    trans_cand <= 5'd12 + js_xn;   // å¾€é«˜ç§»
+
+            // 2) è¿žç»­ç¨³å®šæ‰æäº¤
+            if (trans_cand == trans_idx) begin
+                trans_hcnt <= 4'd0;
+            end else if (trans_hcnt == 4'd7) begin
+                trans_idx  <= trans_cand;
+                trans_hcnt <= 4'd0;
+            end else begin
+                trans_hcnt <= trans_hcnt + 1'b1;
+            end
+        end
+    end
+
+    //------------------------------------------------------------------
+    // 3) Y è½´ â†’ æ€»éŸ³é‡ 0~255ï¼ˆ0 = é™éŸ³ï¼Œ255 = æ”¹é€ å‰çš„æ­£å¸¸å“åº¦ï¼‰
+    //    â˜… 255 æ¡£å®žé™…æ˜¯ Ã—255/256ï¼Œæ‰€ä»¥æŽ¨åˆ°å¤´ä¸ä¼šæ¯”ä»¥å‰æ›´æ—©å‰Šé¡¶ã€‚
+    //------------------------------------------------------------------
+    wire [31:0] js_v32 = ((js_y * JS_VMUL) + 32'd32768) >> 16;                   // å››èˆäº”å…¥
+    wire [7:0]  js_vol = (js_v32 > 32'd255) ? 8'd255 : js_v32[7:0];
+
+    //------------------------------------------------------------------
+    // 4) è·¨åˆ° 12.5MHz éŸ³é¢‘åŸŸ
+    //
+    //   â˜…â˜… å¤šä½æ€»çº¿ã€å¿…é¡»ã€‘ç”¨ç¿»è½¬æ¡æ‰‹ï¼Œä¸èƒ½ç”¨æ™®é€šä¸¤çº§åŒæ­¥å™¨ï¼
+    //
+    //     æ™®é€šä¸¤çº§åŒæ­¥å™¨åªä¿è¯"æ¯ä¸€ä½"ä¸äºšç¨³æ€ï¼Œä¸ä¿è¯å„ä½åœ¨åŒä¸€æ¬¡
+    //     é‡‡æ ·é‡Œè¢«åˆ¤æˆåŒä¸€ä¸ªæ—¶åˆ»çš„å€¼ã€‚js_vol ä»Ž 127 å˜ 128 æ—¶ 8 ä½åŒæ—¶
+    //     åœ¨ç¿»ï¼ŒéŸ³é¢‘åŸŸå¯èƒ½é‡‡åˆ°"é«˜ä½æ˜¯æ–°çš„ã€ä½Žä½æ˜¯æ—§çš„"è¿™ç§ä¸åˆæ³•çš„
+    //     ç»„åˆï¼ˆæ¯”å¦‚ç›´æŽ¥é‡‡æˆ 255ï¼‰â†’ è¾“å‡ºçž¬é—´è·³ä¸€ä¸ªå¤§å°é˜¶ â†’
+    //     å¬æ„Ÿå°±æ˜¯"åŠˆé‡Œå•ªå•¦"çš„ç”µæµå£°/çˆ†éŸ³ã€‚
+    //
+    //     è€Œä¸”è¶Šæ˜¯é¢‘ç¹æ”¹è¶Šå®¹æ˜“æ’žä¸Š â€”â€” è°ƒéŸ³é‡æ—¶ js_vol æŒç»­åœ¨å˜ï¼Œ
+    //     å‘½ä¸­æ¦‚çŽ‡æš´æ¶¨ï¼Œæ­£å¥½å¯¹åº”"è°ƒéŸ³é‡æ—¶å°¤ä¸ºé¢‘ç¹"ã€‚
+    //     trans_idx è™½ç„¶åªæœ‰ 5 ä½ï¼ŒåŒæ ·ä¼šä¸­æ‹›ï¼Œé‡‡é”™å°±çž¬é—´è·³è°ƒã€‚
+    //
+    //   åšæ³•ï¼šæ•°æ®å…ˆåœ¨ 50MHz åŸŸå¯„å­˜ç¨³å®šï¼Œå†ç”¨ä¸€ä¸ªç¿»è½¬ä½é€šçŸ¥éŸ³é¢‘åŸŸ
+    //   "å¯ä»¥å–äº†"ï¼›éŸ³é¢‘åŸŸæ£€å‡ºç¿»è½¬æ²¿æ‰åŽ»é‡‡ï¼Œæ­¤æ—¶æ•°æ®å·²ç¨³å®šå¾ˆä¹…ã€‚
+    //------------------------------------------------------------------
+    reg [4:0] tr_send;
+    reg [7:0] vel_send;
+    reg       cdc_tgl;
+
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) begin
+            tr_send  <= 5'd12;
+            vel_send <= 8'd220;
+            cdc_tgl  <= 1'b0;
+        end else if ((tr_send != trans_idx) || (vel_send != js_vol)) begin
+            tr_send  <= trans_idx;
+            vel_send <= js_vol;
+            cdc_tgl  <= ~cdc_tgl;
+        end
+    end
+
+    reg       cdc_t1, cdc_t2, cdc_t3;
+    reg [4:0] tr_audio_r;
+    reg [7:0] vel_audio_r;
+
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            cdc_t1      <= 1'b0;
+            cdc_t2      <= 1'b0;
+            cdc_t3      <= 1'b0;
+            tr_audio_r  <= 5'd12;
+            vel_audio_r <= 8'd220;
+        end else begin
+            cdc_t1 <= cdc_tgl;
+            cdc_t2 <= cdc_t1;
+            cdc_t3 <= cdc_t2;
+            // æ£€å‡ºç¿»è½¬æ²¿æ‰é‡‡ï¼šæ­¤æ—¶ tr_send/vol_send å·²ç»ç¨³å®šäº†è‡³å°‘ 2 æ‹
+            if (cdc_t2 ^ cdc_t3) begin
+                tr_audio_r  <= tr_send;
+                vel_audio_r <= vel_send;
+            end
+        end
+    end
+
+    wire [4:0] trans_audio = JOY_BYPASS ? 5'd12  : tr_audio_r;
+    wire [7:0] vel_audio = JOY_BYPASS ? 8'd220 : vel_audio_r;
+
+    //==================================================================
+    // 12.5MHz åŸŸï¼šNUM_KEYS è·¯ DDS + æ··éŸ³ + I2S
+    //==================================================================
+    localparam CLK_FREQ_HZ = 12_500_000;
+
+    //=========================================================================
+    // â˜…â˜… I2S å‚æ•°ï¼ˆå”¯ä¸€å¼€å…³ï¼šI2S_SPECï¼‰â˜…â˜…
+    //
+    //  ä¸ºä»€ä¹ˆè¦æœ‰è¿™ä¸ªå¼€å…³ â€”â€” PCM5102A æ•°æ®æ‰‹å†Œ ZHCS323B çš„ç¡¬è¦æ±‚ï¼š
+    //     "System clock frequency = 64, 128, 192, 256, 384, 512, 768,
+    //      1024, 1152, 1536, 2048, or 3072 Ã— fS"
+    //     "SCK rates that are not common to standard audio clocks, between
+    //      1MHz and 50MHz, are only supported in software mode, available
+    //      only in the PCM512x and PCM514x devices"
+    //  PCM5102A æ²¡æœ‰è½¯ä»¶æ¨¡å¼ã€‚è€Œæœ¬æ¿ PCM5102 æ¨¡å—çš„ SCK æŽ¥ GNDï¼Œ
+    //  DAC æ‹¿ BCK å½“ç³»ç»Ÿæ—¶é’Ÿï¼Œæ‰€ä»¥ BCK/LRCK å°±æ˜¯è¿™ä¸ªæ¯”å€¼ã€‚
+    //
+    //     I2S_SPEC = 1'b0ï¼ˆåŽ†å²åŽŸæ ·ï¼Œ25k K44 åŒæ¬¾ï¼‰ï¼š
+    //         BCK åŠå‘¨æœŸ 3 æ‹ â†’ BCK = 12.5M/6 = 2.0833 MHz
+    //         ä¸€å¸§ 48 ä¸ª BCK  â†’ fs  = 12.5M/(48*6) = 43.40 kHz
+    //         æ¯”å€¼ 48Ã—  â† â˜…ä¸åœ¨å…è®¸è¡¨é‡Œï¼Œè¶…è§„æ ¼è¿è¡Œ
+    //
+    //     I2S_SPEC = 1'b1ï¼ˆæœ¬æ¬¡æ”¹å¯¹ï¼‰ï¼š
+    //         BCK åŠå‘¨æœŸ 2 æ‹ â†’ BCK = 12.5M/4 = 3.1250 MHz
+    //         ä¸€å¸§ 64 ä¸ª BCK  â†’ fs  = 12.5M/(64*4) = 48.83 kHz
+    //         æ¯”å€¼ 64Ã—  â† å…è®¸è¡¨é‡Œçš„æœ€å°å€¼ï¼Œåˆæ³•
+    //         å·¦/å³å„ 32bit æ§½ï¼Œ16bit æ ·æœ¬å·¦å¯¹é½æ”¾åœ¨æ¯æ§½é«˜ 16 ä½
+    //
+    //  â˜… é‡‡æ ·çŽ‡ã€SAMPLE_CNT_MAX å…¨éƒ¨ç”±ä¸‹é¢è¿™ç»„å¸¸æ•°æŽ¨å¯¼ï¼Œ
+    //    ä¿è¯ã€ŒDDS æ¯äº§ç”Ÿä¸€ä¸ªæ ·æœ¬ï¼ŒI2S æ­£å¥½å‘ä¸€ä¸ªå¸§ã€ï¼Œä¸ä¼šä¸¢æ ·æœ¬ã€‚
+    //=========================================================================
+    localparam I2S_SPEC = 1'b1;
+
+    // I2S_ALWAYS: BCK/LRCK 常开，静音靠 DIN 送 0 实现。
+    //   music_test0 实测结论：PCM5102A 检测到 BCK/LRCK 停止会进
+    //   Standby/Power Save，每个音的起停都重走一次内部流程，
+    //   必须把这个门控去掉。
+    localparam integer I2S_ALWAYS = 1;
+
+    // â˜…â˜… ä½å®½æ•™è®­ï¼ˆè¸©è¿‡ä¸€æ¬¡ï¼Œå¯¼è‡´æ•´å—éŸ³é¢‘åŸŸè¢«ç»¼åˆæŽ‰ â†’ å®Œå…¨æ²¡å£°éŸ³ï¼‰â˜…â˜…
+    //   ç»å¯¹ä¸èƒ½å†™æˆ  localparam [5:0] FRAME_BITS = 6'd64;
+    //   å› ä¸º 64 éœ€è¦ 7 ä½ï¼ˆ6 ä½åªèƒ½è¡¨ç¤º 0~63ï¼‰ï¼Œä¼šè¢«æˆªæ–­æˆ 0ï¼ŒäºŽæ˜¯
+    //       FRAME_DIV = FRAME_BITS * BCLK_HALF * 2 = 0
+    //       SAMPLE_RATE_HZ = CLK_FREQ_HZ / 0   â†’ x
+    //   ç»¼åˆæ—¥å¿—é‡Œçš„è¯æ®ï¼š
+    //       WARN (EX3792): Literal value 'd64 truncated to fit in 6 bits
+    //       WARN (EX3810): Attempt to divide by 0, returning x
+    //   åŽæžœä¸æ˜¯æŠ¥é”™ï¼Œè€Œæ˜¯ã€é™é»˜åœ°æŠŠ DDS/ROM/åŒ…ç»œ/æ··éŸ³å…¨éƒ¨ä¼˜åŒ–æŽ‰ã€‘ï¼Œ
+    //   ç½‘è¡¨èµ„æºä»Ž REG 4319 æŽ‰åˆ° 124ï¼Œçƒ§è¿›åŽ»å®Œå…¨æ²¡å£°éŸ³ã€‚
+    //   æ‰€ä»¥è¿™é‡Œä¸€å¾‹ç”¨ã€æ— ä½å®½çš„æ•´æ•°ã€‘åšå¸¸æ•°ç®—æœ¯ï¼Œé¿å…ä»»ä½•æˆªæ–­ã€‚
+    localparam integer BCLK_HALF  = I2S_SPEC ? 2 : 3;
+    localparam integer FRAME_BITS = I2S_SPEC ? 64 : 48;
+
+    // ä¸€å¸§ = FRAME_BITS ä¸ª BCK = FRAME_BITS Ã— 2 Ã— BCLK_HALF ä¸ªéŸ³é¢‘æ—¶é’Ÿ
+    //   64bit å¸§ Ã— 2 Ã— 2 = 256  â†’ fs = 12.5M/256 = 48.83kHz, BCK/fs = 64Ã—
+    //   48bit å¸§ Ã— 2 Ã— 3 = 288  â†’ fs = 12.5M/288 = 43.40kHz, BCK/fs = 48Ã—
+    localparam integer FRAME_DIV = FRAME_BITS * BCLK_HALF * 2;
+    localparam integer SAMPLE_RATE_HZ = CLK_FREQ_HZ / FRAME_DIV;
+    localparam integer SAMPLE_CNT_MAX = FRAME_DIV - 1;
+
+    // éŸ³é¢‘åŸŸå¤ä½åŒæ­¥
+    reg rst_a1, rst_a2;
+    always @(posedge clk_audio) begin
+        rst_a1 <= ~rst_n;
+        rst_a2 <= rst_a1;
+    end
+    wire rst_audio_sync = rst_a2;
+
+    //------------------------------------------------------------------
+    // éŸ³ç¬¦é¢‘çŽ‡ â†’ é¢‘çŽ‡å­—
+    //   delta = freq * 2^32 / 48000
+    //   ç‰‡å†…åºå·ï¼š0~4 = é»‘é”® C# D# F# G# A#ï¼›5~11 = ç™½é”® C D E F G A B
+    //   ç¬¬ n ç‰‡ = ç¬¬ 0 ç‰‡ << nï¼ˆæ­£å¥½é«˜ n ä¸ªå…«åº¦ï¼Œ2:1 ç²¾ç¡®å…«åº¦ï¼‰
+    //------------------------------------------------------------------
+    function [31:0] calc_delta;
+        input [31:0] freq;
+        reg   [63:0] tmp;
+        begin
+            tmp        = {32'd0, freq} << 32;
+            calc_delta = tmp / SAMPLE_RATE_HZ;
+        end
+    endfunction
+
+    wire [31:0] delta [0:NUM_KEYS-1];   // 每键基础频率字（常数）
+    reg  [31:0] dcur  [0:NUM_KEYS-1];   // 每键滑音中的当前频率字（未加移调）
+    reg  [31:0] inc   [0:NUM_KEYS-1];   // 送进相位累加器的增量（已加移调）
+    reg  [4:0]  tr_now;                 // 已经生效的档位
+    reg  [4:0]  tr_gi;                  // 轮询到第几个键
+    reg  [17:0] tr_ratio_r;
+
+    localparam [4:0] TRANS_DEF = 5'd12;        // 原调档位
+
+    //------------------------------------------------------------------
+    // 2^((i-12)/12) 的 Q16 定点（i=12 -> 1.0）
+    //------------------------------------------------------------------
+    function [17:0] trans_ratio;
+        input [4:0] i;
+        begin
+            case (i)
+                5'd0 : trans_ratio = 18'd32768;    // -12 半音 = 0.5
+                5'd1 : trans_ratio = 18'd34719;
+                5'd2 : trans_ratio = 18'd36785;
+                5'd3 : trans_ratio = 18'd38968;
+                5'd4 : trans_ratio = 18'd41285;
+                5'd5 : trans_ratio = 18'd43740;
+                5'd6 : trans_ratio = 18'd46341;
+                5'd7 : trans_ratio = 18'd49097;
+                5'd8 : trans_ratio = 18'd52016;
+                5'd9 : trans_ratio = 18'd55109;
+                5'd10: trans_ratio = 18'd58386;
+                5'd11: trans_ratio = 18'd61858;
+                5'd12: trans_ratio = 18'd65536;    // 原调 = 1.0
+                5'd13: trans_ratio = 18'd69433;
+                5'd14: trans_ratio = 18'd73562;
+                5'd15: trans_ratio = 18'd77936;
+                5'd16: trans_ratio = 18'd82570;
+                5'd17: trans_ratio = 18'd87480;
+                5'd18: trans_ratio = 18'd92682;
+                5'd19: trans_ratio = 18'd98193;
+                5'd20: trans_ratio = 18'd104032;
+                5'd21: trans_ratio = 18'd110218;
+                5'd22: trans_ratio = 18'd116772;
+                5'd23: trans_ratio = 18'd123716;
+                5'd24: trans_ratio = 18'd131072;   // +12 半音 = 2.0
+                default: trans_ratio = 18'd65536;
+            endcase
+        end
+    endfunction
+
+    //==================================================================
+    // 音阶表：三片键盘【连续覆盖 A2 ~ G#4】（36 键 = 3 个八度）
+    //
+    //   物理排布（每片从左到右）：白 黑 白 黑 白 白 黑 白 黑 白 黑 白
+    //     白键位 1、3、5、6、8、10、12      黑键位 2、4、7、9、11
+    //     ★ 每个黑键 = 它【左边那个白键】升半音（和钢琴一样）
+    //
+    //   TTP229 模块丝印键号与物理位置是错开的：
+    //     模块键 1~5  = 黑键 -> 物理位 2、4、7、9、11
+    //     模块键 6~12 = 白键 -> 物理位 1、3、5、6、8、10、12
+    //   所以每条后面都标了【模块键号】，接线对照时看这个。
+    //
+    //   三片关系：琴键2 = 琴键1 +1 个八度，琴键3 = +2 个八度（×2 / ×4）
+    //   音名 -> 频率：A4 = 440Hz 基准，freq = 110 × 2^(n/12)
+    //   delta = freq × 2^32 / SAMPLE_RATE_HZ
+    //==================================================================
+
+    // ---- 琴键1（键 1~12）：A2 ~ G#2 ----
+    assign delta[0]  = calc_delta(32'd117); // 键1  模块键1  黑    A#2   117 Hz
+    assign delta[1]  = calc_delta(32'd131); // 键2  模块键2  黑    C3   131 Hz
+    assign delta[2]  = calc_delta(32'd156); // 键3  模块键3  黑    D#3   156 Hz
+    assign delta[3]  = calc_delta(32'd175); // 键4  模块键4  黑    F3   175 Hz
+    assign delta[4]  = calc_delta(32'd196); // 键5  模块键5  黑    G3   196 Hz
+    assign delta[5]  = calc_delta(32'd110); // 键6  模块键6  白    A2   110 Hz
+    assign delta[6]  = calc_delta(32'd123); // 键7  模块键7  白    B2   123 Hz
+    assign delta[7]  = calc_delta(32'd139); // 键8  模块键8  白    C#3   139 Hz
+    assign delta[8]  = calc_delta(32'd147); // 键9  模块键9  白    D3   147 Hz
+    assign delta[9]  = calc_delta(32'd165); // 键10 模块键10 白    E3   165 Hz
+    assign delta[10] = calc_delta(32'd185); // 键11 模块键11 白    F#3   185 Hz
+    assign delta[11] = calc_delta(32'd208); // 键12 模块键12 白    G#3   208 Hz
+
+    // ---- 琴键2（键 13~24）：A3 ~ G#3 = 琴键1 的 2 倍 ----
+    assign delta[12] = calc_delta(32'd233); // 键13 模块键1  黑    A#3   233 Hz
+    assign delta[13] = calc_delta(32'd262); // 键14 模块键2  黑    C4   262 Hz
+    assign delta[14] = calc_delta(32'd311); // 键15 模块键3  黑    D#4   311 Hz
+    assign delta[15] = calc_delta(32'd349); // 键16 模块键4  黑    F4   349 Hz
+    assign delta[16] = calc_delta(32'd392); // 键17 模块键5  黑    G4   392 Hz
+    assign delta[17] = calc_delta(32'd220); // 键18 模块键6  白    A3   220 Hz
+    assign delta[18] = calc_delta(32'd247); // 键19 模块键7  白    B3   247 Hz
+    assign delta[19] = calc_delta(32'd277); // 键20 模块键8  白    C#4   277 Hz
+    assign delta[20] = calc_delta(32'd294); // 键21 模块键9  白    D4   294 Hz
+    assign delta[21] = calc_delta(32'd330); // 键22 模块键10 白    E4   330 Hz
+    assign delta[22] = calc_delta(32'd370); // 键23 模块键11 白    F#4   370 Hz
+    assign delta[23] = calc_delta(32'd415); // 键24 模块键12 白    G#4   415 Hz
+
+    //------------------------------------------------------------------
+    // ★ 摇杆移调：inc[g] = dcur[g] × 2^((trans-12)/12)
+    //
+    //   trans_audio = 0~24，12 = 原调，每一格 = 1 个半音。
+    //   ★ 分工：滑音只在 dcur[] 里做，目标永远是【常数】delta[g]；
+    //     移调单独在 inc[] 里做，只用一个乘法器轮询算。
+    //     两者拼起来 = 边滑边移调，功能一个不少。
+    //
+    //   ★ 只多用了一个乘法器，而且是分时复用的：
+    //     档位不变时状态机完全停着，摇杆动一下才跑一轮刷新
+    //     （36 个键各占 1 拍 = 36 拍）。所以它既不占时序也不费功耗。
+    //
+    //   精度：delta 先截成高 18 位再乘，等效频率误差约 2^-18
+    //         ≈ 0.007 音分，完全听不出来。
+    //------------------------------------------------------------------
+
+    // 当前轮到的那个键（取高 18 位，精度约 0.1 音分）
+    wire [17:0] tr_dsel = dcur[tr_gi] >> 14;
+
+    // ★ 全工程共用的【那一个】移调乘法器（18×18）
+    wire [35:0] tr_prod   = tr_dsel * tr_ratio_r;
+    // ★ 等价改写：原来是「34 位结果赋给 32 位」被静默截掉高 2 位（EX3791 告警）。
+    //   直接写位选 tr_prod[33:2]，取值完全一样，告警消失。
+    wire [31:0] tr_result = tr_prod[33:2];     // ≡ dcur × ratio / 65536
+
+    //------------------------------------------------------------------
+    // ★ 轮询不停机：每个音频时钟算一个键，36 拍（2.9us）刷完全部。
+    //   比滑音的更新速率（每 288 拍一次）快 12 倍，所以 dcur 一动
+    //   inc 立刻跟上，不需要任何"变化检测"。
+    //   代价只有 1 个乘法器，路径也很短（乘法+移位直接写寄存器）。
+    //------------------------------------------------------------------
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            tr_now     <= 5'd31;               // 非法值 -> 上电必刷一轮
+            tr_gi      <= 5'd0;
+            tr_ratio_r <= 18'd65536;
+        end else begin
+            if (trans_audio != tr_now) begin
+                tr_now     <= trans_audio;
+                tr_ratio_r <= trans_ratio(trans_audio);
+            end
+            tr_gi <= (tr_gi == NUM_KEYS-1) ? 5'd0 : (tr_gi + 1'b1);
+        end
+    end
+
+    //------------------------------------------------------------------
+    // ★ inc[] 必须用 generate 展开成 36 个【独立寄存器】。
+    //
+    //   千万别写成 inc[tr_gi] <= ... 这种变量下标赋值 ——
+    //   综合器会把整个数组当成寄存器堆，36 路并行读各挂一个 36:1
+    //   选择器，光是选择器就要多烧几千个 LUT。
+    //   展开之后每个键是固定下标，相位累加那边读写都不需要选择器。
+    //
+    //   复位值直接填原调，避免 X 传播进相位累加器。
+    //------------------------------------------------------------------
+    genvar gt;
+    generate
+        for (gt = 0; gt < NUM_KEYS; gt = gt + 1) begin : gen_tune
+            always @(posedge clk_audio or negedge rst_n) begin
+                if (!rst_n)             inc[gt] <= delta[gt];
+                else if (tr_gi == gt)   inc[gt] <= tr_result;
+            end
+        end
+    endgenerate
+
+    // ---- 琴键3（键 25~36）：A4 ~ G#4 = 琴键1 的 4 倍 ----
+    assign delta[24] = calc_delta(32'd466); // 键25 模块键1  黑    A#4   466 Hz
+    assign delta[25] = calc_delta(32'd523); // 键26 模块键2  黑    C5   523 Hz
+    assign delta[26] = calc_delta(32'd622); // 键27 模块键3  黑    D#5   622 Hz
+    assign delta[27] = calc_delta(32'd698); // 键28 模块键4  黑    F5   698 Hz
+    assign delta[28] = calc_delta(32'd784); // 键29 模块键5  黑    G5   784 Hz
+    assign delta[29] = calc_delta(32'd440); // 键30 模块键6  白    A4   440 Hz
+    assign delta[30] = calc_delta(32'd494); // 键31 模块键7  白    B4   494 Hz
+    assign delta[31] = calc_delta(32'd554); // 键32 模块键8  白    C#5   554 Hz
+    assign delta[32] = calc_delta(32'd587); // 键33 模块键9  白    D5   587 Hz
+    assign delta[33] = calc_delta(32'd659); // 键34 模块键10 白    E5   659 Hz
+    assign delta[34] = calc_delta(32'd740); // 键35 模块键11 白    F#5   740 Hz
+    assign delta[35] = calc_delta(32'd831); // 键36 模块键12 白    G#5   831 Hz
+
+    //------------------------------------------------------------------
+    // 48kHz é‡‡æ ·ä½¿èƒ½
+    //------------------------------------------------------------------
+    reg [15:0] sample_cnt;
+    reg        sample_en;
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) begin
+            sample_cnt <= 16'd0;
+            sample_en  <= 1'b0;
+        end else begin
+            if (sample_cnt >= SAMPLE_CNT_MAX) begin
+                sample_cnt <= 16'd0;
+                sample_en  <= 1'b1;
+            end else begin
+                sample_cnt <= sample_cnt + 1'b1;
+                sample_en  <= 1'b0;
+            end
+        end
+    end
+
+    //==================================================================
+    // â˜…â˜… è¯Šæ–­å¼€å…³ï¼šTEST_SINE â˜…â˜…ï¼ˆæ”¾åœ¨éŸ³é¢‘åŸŸå¼€å¤´ï¼ŒåŽé¢å¤šå¤„ä¼šç”¨åˆ°ï¼‰
+    //   1'b1 â†’ å®Œå…¨ç»•è¿‡åŒ…ç»œ / å¢žç›Š / è°æ³¢ / AGC / æ¢è°ƒï¼Œç›´æŽ¥è¾“å‡ºä¸€ä¸ª
+    //          å›ºå®šéŸ³é‡çš„çº¯æ­£å¼¦ï¼Œç”¨æ¥æŠŠ"éŸ³è°ƒæ•°æ®äº§ç”Ÿé“¾"å’Œ"åŒ…ç»œæ··éŸ³é“¾"
+    //          å½»åº•åˆ†å¼€å®šä½ï¼š
+    //     å¬åˆ°å¹²å‡€ç¨³å®šçš„çº¯éŸ³ â†’ I2S + DAC + æ—¶é’Ÿæ˜¯å¥½çš„ï¼Œ
+    //                          é—®é¢˜åœ¨è¢«ç»•å¼€çš„é‚£ä¸€æ®µé‡Œï¼›
+    //     ä»ç„¶å˜¶å“‘/æ–­ç»­      â†’ é—®é¢˜åœ¨ I2S / DAC / æ—¶é’Ÿæœ¬èº«ã€‚
+    //   æµ‹å®ŒåŠ¡å¿…æ”¹å›ž 1'b0 å†å‡ºæ­£å¼ç‰ˆã€‚
+    //==================================================================
+    localparam TEST_SINE = 1'b0;
+
+    // æµ‹è¯•éŸ³ç›¸ä½ç´¯åŠ ï¼ˆæ¯ä¸ªé‡‡æ ·ç‚¹èµ°ä¸€æ­¥ï¼‰
+    //   é¢‘çŽ‡ = SAMPLE_RATE_HZ Ã— TEST_INC / 2^32
+    //   TEST_INC = 2^24 â†’ 43402 Ã— 2^24 / 2^32 â‰ˆ 169.6 Hz
+    reg [31:0] test_phase;
+    localparam [31:0] TEST_INC = 32'd16777216;
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) test_phase <= 32'd0;
+        else if (sample_en)  test_phase <= test_phase + TEST_INC;
+    end
+
+    //==================================================================
+    // NUM_KEYS è·¯ ADSR åŒ…ç»œ
+    //
+    //   å‚è€ƒ ADSR1 çš„æ€è·¯ï¼Œä½†è¡¥é½äº† Sustain ç”µå¹³ï¼Œå¹¶ä¸”è§£å†³äº†å®ƒçš„ç ´éŸ³é—®é¢˜ã€‚
+    //
+    //   çŠ¶æ€æµè½¬ï¼ˆæ¯ä¸ªé”®ç‹¬ç«‹ï¼‰ï¼š
+    //     æŒ‰ä¸‹      ï¼šä»Žå½“å‰ç”µå¹³å¿«é€Ÿ Attack å†²åˆ° 255
+    //     ç»§ç»­æŒ‰ä½  ï¼šä»¥ Decay é€ŸçŽ‡è¡°å‡åˆ° SUSTAIN_LVï¼Œç„¶åŽä¿æŒ
+    //     æ¾å¼€      ï¼šä»¥ Release é€ŸçŽ‡è¡°å‡åˆ° 0ï¼ˆè¿™å°±æ˜¯"å»¶éŸ³"å°¾å·´ï¼‰
+    //     å°¾å·´æ²¡ç»“æŸæ—¶å†æŒ‰ä¸‹ï¼šä»Žå½“å‰ç”µå¹³æŽ¥ç€å¾€ä¸Šå†²ï¼ˆä¸æ–­éŸ³ã€ä¸è·³å˜ï¼‰
+    //
+    //   æ—¶é—´ï¼ˆé‡‡æ ·çŽ‡ 43403Hzï¼Œå½“å‰å‚æ•°ä¸‹ï¼‰ï¼š
+    //     Attack  ï¼š255/8 = 32 ä¸ªé‡‡æ ·ç‚¹ â‰ˆ 0.74ms
+    //     Decay   ï¼š(255-0)Ã—280 = 71400 ä¸ªé‡‡æ ·ç‚¹ â‰ˆ 1.64sï¼ˆSUSTAIN_LV=0 æ—¶ï¼‰
+    //     Release ï¼šåŒæ ·é€ŸçŽ‡ï¼Œä»Žå½“å‰ç”µå¹³è¡°å‡åˆ° 0
+    //
+    //   â˜… å‚æ•°è¯´æ˜Žï¼š
+    //     ENV_SUSTAIN_LV = 0  â†’  æŒ‰ä½æ—¶ä¼šä¸€ç›´è¡°å‡åˆ°é™éŸ³ï¼ˆé’¢ç´å¼ï¼Œå½“å‰è®¾ç½®ï¼‰
+    //     ENV_SUSTAIN_LV = 200 â†’ æŒ‰ä½æ—¶è¡°å‡åˆ° 200 å°±ä¿æŒï¼ˆçº¦ -2dB çš„æŒç»­éŸ³ï¼‰
+    //     ENV_SUSTAIN_LV = 255 â†’  å®Œå…¨æ²¡æœ‰è¡°å‡æ®µï¼ŒæŒ‰ä½æ’å®šä¸ºæ»¡å¹…
+    //==================================================================
+    // â˜… æ¢å¤æˆ 25k K44 é‚£ç‰ˆçš„å–å€¼ï¼ˆé‚£ç‰ˆåŒ…ç»œ/éŸ³è‰²æ˜¯èƒ½æ­£å¸¸å‘å£°çš„åŸºå‡†ï¼‰ã€‚
+    //   æ›¾ç»è¯•è¿‡æŠŠå°é˜¶é™åˆ° 1 æƒ³è®©éŸ³å¤´æ›´å¹³æ»‘ï¼Œç»“æžœ 60k ä¸Šå‘å£°åè€Œä¸å¯¹ï¼Œ
+    //   æ‰€ä»¥è¿™é‡Œä¿æŒå’Œ K44 å®Œå…¨ä¸€è‡´ï¼Œä¸è¦å†å•ç‹¬æ”¹è¿™ä¸€ä¸ªæ•°ã€‚
+    localparam [7:0]  ENV_ATTACK_STEP = 8'd8;      // æ¯æ¬¡é‡‡æ ·ä¸Šå‡é‡
+    localparam [7:0]  ENV_SUSTAIN_LV  = 8'd0;      // æŒ‰ä½æ—¶çš„ä¿æŒç”µå¹³ï¼ˆ0 = é’¢ç´å¼ï¼šä¸€ç›´è¡°å‡åˆ°é™éŸ³ï¼‰
+    localparam [15:0] ENV_DECAY_DIV   = 16'd280;   // æ¯å¤šå°‘ä¸ªé‡‡æ ·ç‚¹è¡°å‡ 1
+    localparam [15:0] ENV_RELEASE_DIV = 16'd280;   // é‡Šæ”¾é€ŸçŽ‡ï¼ˆåŒä¸Šï¼‰
+
+    reg [7:0]  env [0:NUM_KEYS-1];
+
+    reg [15:0] dec_cnt, rel_cnt;
+    wire dec_tick = (dec_cnt >= ENV_DECAY_DIV   - 1);
+    wire rel_tick = (rel_cnt >= ENV_RELEASE_DIV - 1);
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) begin
+            dec_cnt <= 16'd0;
+            rel_cnt <= 16'd0;
+        end else if (sample_en) begin
+            dec_cnt <= dec_tick ? 16'd0 : (dec_cnt + 1'b1);
+            rel_cnt <= rel_tick ? 16'd0 : (rel_cnt + 1'b1);
+        end
+    end
+
+    //------------------------------------------------------------------
+    // â˜… æ ¹æ²»"åŒä¸€ä¸ªéŸ³è¢«é‡å¼¹ä¸€æ¬¡ï¼ˆå›žå£°ï¼‰"ç”¨çš„ gate åŽ»æŠ–æ…¢æ‹
+    //
+    //   åŒ…ç»œé  attacking æ ‡å¿—åŒºåˆ†"è¿˜åœ¨æ”»å‡»"å’Œ"æ”»å‡»å·²å®Œæˆ"ã€‚
+    //   åŽŸæ¥åªè¦ sounding_mask_aud æœ‰ä¸€æ‹ä¸º 0ï¼ˆè¯¥é”®è¯»åˆ°æ¾å¼€ï¼‰å°±ç«‹åˆ»æ¸… attackingï¼Œ
+    //   é”®ä½ä¸€æ¢å¤ env é©¬ä¸Šé‡æ–° attack â†’ åŒä¸€ä¸ªéŸ³å†å“ä¸€æ¬¡ï¼Œå¬æ„Ÿå°±æ˜¯"å›žå£°"ã€‚
+    //   è€Œ key_mask çš„çž¬é—´æŽ‰è½å¸¸å¸¸æ¥è‡ªã€å•è½®åè¯»æ•°ã€‘ï¼ˆTTP229 è¢«å¹²æ‰°è¯»é”™ï¼‰ï¼Œ
+    //   å¹¶ä¸æ˜¯çœŸçš„æ¾æ‰‹ â€”â€” å®ƒåŒæ—¶ä¹Ÿæ˜¯"å›žå£°åªåœ¨å¿«é€Ÿè¿žæŒ‰æ—¶æ˜Žæ˜¾"çš„åŽŸå› ï¼š
+    //   æŒ‰å¾—æ…¢æ—¶ï¼ŒæŽ‰è½å‘ç”Ÿåœ¨éŸ³ç¬¦å·²ç»è¡°å‡åˆ°æŽ¥è¿‘ 0 çš„æ—¶å€™ï¼Œé‡å¼¹å¬ä¸å‡ºæ¥ã€‚
+    //
+    //   æ ¹æ²»åŠžæ³•ï¼šæ¾æ‰‹å¿…é¡»ã€åŽ»æŠ–ã€‘â€”â€” è¿žç»­ä½Žæ»¡ 8ms æ‰æ‰¿è®¤ã€‚
+    //     æœªç¡®è®¤æœŸé—´ env å’Œ attacking å…¨éƒ¨ä¿æŒä¸åŠ¨ï¼š
+    //     éŸ³ç¬¦ä¸æ–­ã€ç›¸ä½ä¸é‡ç½®ã€æ›´ä¸ä¼šé‡æ–°æ”»å‡»ã€‚
+    //   8ms çš„åˆ¤æ®ï¼š1ms æ…¢æ‹è®¡åˆ° bit3ï¼ˆå€¼>=8ï¼‰ã€‚å•è½®åè¯»æ•° 2.26ms æœ€å¤šè®¡ 3ï¼Œ
+    //   è¿žç»­ 3 è½®åè¯»æ•°(6.8ms)æœ€å¤šè®¡ 7ï¼Œéƒ½åˆ°ä¸äº† 8 â†’ ä¸€å¾‹æ»¤æŽ‰ã€‚
+    //   è€Œäººæœ€å¿«çš„è¿žç»­é‡å¤å¼¹å¥é—´éš”ä¹Ÿè¿œå¤§äºŽ 8msï¼ŒçœŸæ­£çš„é‡å¤æŒ‰é”®ä¸ä¼šè¢«åžã€‚
+    //------------------------------------------------------------------
+    localparam [5:0] ENV_GATE_TICK_DIV = 6'd42;    // 43 ä¸ªé‡‡æ ·ç‚¹ @43402Hz â‰ˆ 0.99ms
+
+    reg  [5:0] gate_tick_cnt;
+    wire       gate_tick = (gate_tick_cnt >= ENV_GATE_TICK_DIV);
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) gate_tick_cnt <= 6'd0;
+        else if (sample_en) gate_tick_cnt <= gate_tick ? 6'd0 : (gate_tick_cnt + 1'b1);
+    end
+
+    genvar ge;
+    generate
+        for (ge = 0; ge < NUM_KEYS; ge = ge + 1) begin : gen_env
+            // â˜… attackingï¼šæ˜¾å¼è®°ä½"æ”»å‡»å·²ç»å®Œæˆ"ã€‚
+            //   ä¸èƒ½æ‹¿ env < 255 å½“åˆ¤æ®ï¼Œå¦åˆ™è¡°å‡èµ°å‡ºä¸€æ­¥(255â†’254)åŽåˆ¤æ®åˆæˆç«‹ â†’
+            //   ç«‹åˆ»é‡æ–°æ”»å‡»å›ž 255ï¼ŒåŒ…ç»œæ°¸è¿œåœåœ¨æ»¡å¹…ã€é•¿æŒ‰å˜æˆä¸€ç›´å“ã€‚
+            reg attacking;
+            // â˜… gate_off_cntï¼šgate å·²ç»è¿žç»­ä½Žäº†å¤šå°‘ä¸ª 1ms æ‹ï¼ˆ4 ä½é¥±å’Œï¼‰ã€‚
+            //   bit3 = 1 è¡¨ç¤ºå·²è¿žç»­ä½Žæ»¡ 8ms â†’ ç¡®è®¤çœŸçš„æ¾æ‰‹äº†ã€‚
+            reg [3:0] gate_off_cnt;
+
+            always @(posedge clk_audio) begin
+                if (rst_audio_sync) begin
+                    env[ge]       <= 8'd0;
+                    attacking     <= 1'b0;
+                    gate_off_cnt  <= 4'd0;
+                end else if (sample_en) begin
+                    if (sounding_mask_aud[ge]) begin
+                        // ---- å‘å£°ï¼ˆç‰©ç†æŒ‰ä¸‹ æˆ– å»¶éŸ³é”å­˜ï¼‰----
+                        gate_off_cnt <= 4'd0;        // é”®è¿˜åœ¨ â†’ åŽ»æŠ–è®¡æ•°å¤ä½
+                        if (sustain_latch_aud[ge]) begin
+                            // â˜… å»¶éŸ³é”å­˜çš„é”®ï¼šä¸è¡°å‡ï¼Œé’‰åœ¨æ»¡å¹…
+                            //   ï¼ˆç”¨æˆ·è¦æ±‚"ç‚¹è¿‡çš„ç´é”®ä¸€ç›´å“"ï¼ŒåŒ…ç»œç­‰äºŽæ—è·¯ï¼‰
+                            env[ge]   <= 8'd255;
+                            attacking <= 1'b1;
+                        end else if (!attacking) begin
+                            // Attackï¼šå¿«é€Ÿå†²åˆ°é¡¶ï¼Œåˆ°é¡¶åŽç½®æ ‡å¿—
+                            if (env[ge] >= 8'd255 - ENV_ATTACK_STEP) begin
+                                env[ge]   <= 8'd255;
+                                attacking <= 1'b1;
+                            end else
+                                env[ge]   <= env[ge] + ENV_ATTACK_STEP;
+                        end else if (env[ge] > ENV_SUSTAIN_LV) begin
+                            // Decayï¼šä»Žå³°å€¼è¡°å‡åˆ° Sustain ç”µå¹³
+                            if (dec_tick) env[ge] <= env[ge] - 8'd1;
+                        end
+                        // åˆ°è¾¾ Sustain åŽä¿æŒä¸åŠ¨
+                    end else begin
+                        // ---- gate æŽ‰äº†ï¼šå…ˆåˆ«æ€¥ç€å½“"æ¾æ‰‹" ----
+                        // â˜…â˜… è¿™é‡Œå°±æ˜¯"é‡å¼¹/å›žå£°"çš„æ ¹æ²»ç‚¹ â˜…â˜…
+                        //   åŽŸæ¥æ— æ¡ä»¶ attacking <= 1'b0ï¼Œå•è½®åè¯»æ•°ï¼ˆ2.26msï¼‰ä¹Ÿä¼šæ¸…æŽ‰å®ƒï¼›
+                        //   é”®ä½ä¸€æ¢å¤ env å°±é‡æ–° attack â†’ åŒä¸€ä¸ªéŸ³å†å“ä¸€æ¬¡ã€‚
+                        //   çŽ°åœ¨å¿…é¡»è¿žç»­ä½Žæ»¡ 8ms æ‰æ‰¿è®¤æ¾æ‰‹ï¼›æœªç¡®è®¤æœŸé—´
+                        //   env å’Œ attacking å…¨éƒ¨ä¿æŒ â†’ éŸ³ç¬¦ä¸æ–­ã€ç›¸ä½ä¸é‡ç½®ã€ä¸é‡å¼¹ã€‚
+                        if (gate_tick && !gate_off_cnt[3])
+                            gate_off_cnt <= gate_off_cnt + 1'b1;
+
+                        if (gate_off_cnt[3]) begin
+                            attacking <= 1'b0;
+                            if (rel_tick && env[ge] > 8'd0)
+                                env[ge] <= env[ge] - 8'd1;
+                        end
+                    end
+                end
+            end
+        end
+    endgenerate
+
+    //------------------------------------------------------------------
+    // "æ­£åœ¨å‘å£°"åˆ¤å®šï¼šenv != 0ï¼ˆå«å»¶éŸ³å°¾å·´ï¼‰
+    //   â˜… æ··éŸ³é—¨æŽ§è¦ç”¨å®ƒï¼Œè€Œä¸æ˜¯ç”¨ key_mask â€”â€”
+    //     å¦åˆ™æ¾å¼€æŒ‰é”®çš„çž¬é—´å»¶éŸ³å°¾å·´ä¼šè¢«ç›´æŽ¥æŽæŽ‰ã€‚
+    //
+    //   â˜…â˜… ä½†å®ƒã€ä¸èƒ½æ‹¿æ¥é—¨æŽ§ç›¸ä½ç´¯åŠ å™¨ã€‘â˜…â˜… â€”â€” è§ä¸‹é¢ç›¸ä½ç´¯åŠ é‚£æ®µçš„è¯´æ˜Žã€‚
+    //------------------------------------------------------------------
+    wire [NUM_KEYS-1:0] sounding_mask;
+    generate
+        for (ge = 0; ge < NUM_KEYS; ge = ge + 1) begin : gen_snd
+            assign sounding_mask[ge] = (env[ge] != 8'd0);
+        end
+    endgenerate
+
+    //==================================================================
+    // æ»‘éŸ³ï¼ˆPortamentoï¼‰
+    //
+    //   å¼€å¯åŽï¼Œæ¯ä¸ªæ–°æŒ‰ä¸‹çš„é”®ä»Žã€ä¸Šä¸€ä¸ªéŸ³çš„éŸ³é«˜ã€‘å¼€å§‹ï¼Œ
+    //   ä»¥å›ºå®šæ­¥é•¿æ»‘åˆ°è‡ªå·±çš„éŸ³é«˜ã€‚éŸ³ç¨‹è¶Šå¤§æ»‘å¾—è¶Šä¹… â€”â€” å’ŒçœŸå®žæ»‘éŸ³ä¸€è‡´ã€‚
+    //
+    //   â˜… æ¯ä¸ªé”®æœ‰è‡ªå·±çš„ä¸€ä»½"å½“å‰é¢‘çŽ‡å­—" dcurï¼š
+    //       æŒ‰ä¸‹çž¬é—´åˆå§‹åŒ–ä¸º last_deltaï¼ˆä¸Šä¸€ä¸ªéŸ³ï¼‰
+    //       ä¹‹åŽæ¯ä¸ªé‡‡æ ·ç‚¹å‘ delta[g]ï¼ˆæœ¬éŸ³ï¼‰é è¿‘ GLIDE_STEP
+    //   â˜… 3/4 æ¬¡è°æ³¢çš„ç›¸ä½æ˜¯ä»Ž phase æ´¾ç”Ÿçš„ï¼Œæ‰€ä»¥ä¼šè‡ªåŠ¨è·Ÿç€ä¸€èµ·æ»‘ã€‚
+    //==================================================================
+    //   æ¯ä¸€æ­¥çš„é¢‘çŽ‡å­—å¢žé‡ã€‚â˜… åªæ”¹è¿™ä¸€ä¸ªæ•°å°±èƒ½è°ƒæ»‘éŸ³é€Ÿåº¦ï¼š
+    //       8192  â†’ ä¸€ä¸ªå…«åº¦çº¦ 145 msï¼ˆåƒ"è¿žå¥"ï¼Œå¾ˆå¿«ï¼‰
+    //       4096  â†’ ä¸€ä¸ªå…«åº¦çº¦ 290 ms
+    //       2048  â†’ ä¸€ä¸ªå…«åº¦çº¦ 580 msï¼ˆå½“å‰å€¼ï¼Œå¬æ„Ÿæœ€æ˜Žæ˜¾ï¼‰  â˜…
+    //       1024  â†’ ä¸€ä¸ªå…«åº¦çº¦ 1.16 sï¼ˆå¾ˆå¤¸å¼ çš„æ»‘éŸ³ï¼‰
+    localparam [31:0] GLIDE_STEP = 32'd2048;   // æ¯é‡‡æ ·ç‚¹æ»‘å¤šå°‘ï¼›è°ƒå¤§=æ»‘å¾—æ›´å¿«
+
+    // æ»‘éŸ³å¼€å…³è·¨æ—¶é’Ÿï¼ˆæ…¢ä¿¡å·ï¼Œ2 çº§åŒæ­¥è¶³å¤Ÿï¼‰
+    reg glide_s1, glide_s2;
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            glide_s1 <= 1'b0;
+            glide_s2 <= 1'b0;
+        end else begin
+            glide_s1 <= glide_en;
+            glide_s2 <= glide_s1;
+        end
+    end
+    wire glide_on = glide_s2;
+
+    // æœ€è¿‘ä¸€æ¬¡æŒ‰ä¸‹çš„é”®çš„é¢‘çŽ‡å­—ï¼Œä½œä¸ºä¸‹ä¸€ä¸ªéŸ³çš„æ»‘éŸ³èµ·ç‚¹
+    reg [31:0] last_delta;
+
+    // éŸ³é¢‘åŸŸä¸Šå‡æ²¿æ£€æµ‹ï¼šè¿™ä¸€æ‹åˆšæŒ‰ä¸‹çš„é”®
+    reg  [NUM_KEYS-1:0] key_mask_d;
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) key_mask_d <= {NUM_KEYS{1'b0}};
+        else        key_mask_d <= key_mask;
+    end
+    wire [NUM_KEYS-1:0] key_new = key_mask & ~key_mask_d;
+
+    //==================================================================
+    // å»¶éŸ³é”å­˜
+    //
+    //   å»¶éŸ³æ‰“å¼€åŽï¼Œæ¯æ¬¡ã€æ–°ç‚¹ä¸‹ä¸€ä¸ªç´é”®ã€‘å°±æŠŠè¯¥é”® OR è¿›é”å­˜ï¼›
+    //   å†ç‚¹åŒä¸€ä¸ªé”®ï¼ˆå®ƒå·²åœ¨é”å­˜é‡Œï¼‰å°±æŠŠå®ƒåŽ»æŽ‰ï¼›å¤šä¸ªé”®å åŠ ã€‚
+    //   å…³é—­å»¶éŸ³æ—¶é”å­˜ä¸€æ¬¡æ€§æ¸…é›¶ï¼ˆå…¨éƒ¨é‡Šæ”¾ï¼‰ã€‚
+    //
+    //   â˜… ç”¨ key_new åšåˆ‡æ¢ï¼šå®ƒæ˜¯"æŒ‰ä¸‹é‚£ä¸€çž¬é—´"çš„å•æ‹è„‰å†²ï¼Œå¤©ç„¶ä¸€æ¬¡äº‹ä»¶ã€‚
+    //     è‹¥æ”¹ç”¨ key_mask åš XORï¼ŒæŒ‰ä½æœŸé—´ key_mask ä¸€ç›´ä¸º 1ï¼Œ
+    //     ä¼šæ¯ä¸ªæ—¶é’Ÿç¿»è½¬ä¸€æ¬¡ï¼Œæ ¹æœ¬é”ä¸ä½ã€‚
+    //   â˜… æ”¾åœ¨éŸ³é¢‘åŸŸï¼Œé¿å…è·¨æ—¶é’ŸåŸŸå¼•ç”¨ 50MHz çš„ä¿¡å·ã€‚
+    //==================================================================
+    reg [NUM_KEYS-1:0] sustain_latch_aud;
+
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            sustain_latch_aud <= {NUM_KEYS{1'b0}};
+        end else if (!sustain_on_audio) begin
+            sustain_latch_aud <= {NUM_KEYS{1'b0}};              // å…³å»¶éŸ³ â†’ å…¨éƒ¨é‡Šæ”¾
+        end else if (key_new != {NUM_KEYS{1'b0}}) begin
+            sustain_latch_aud <= sustain_latch_aud ^ key_new;   // ç‚¹äº†å°±åŠ ï¼Œå†ç‚¹å°±åŽ»æŽ‰
+        end
+    end
+
+    // çœŸæ­£é©±åŠ¨å‘å£°çš„æŽ©ç  = ç‰©ç†æŒ‰ä¸‹çš„é”® âˆª å»¶éŸ³é”å­˜çš„é”®
+    wire [NUM_KEYS-1:0] sounding_mask_aud = key_mask | sustain_latch_aud;
+
+    integer ki;
+    always @(posedge clk_audio) begin
+        // â˜… è¿™é‡Œç»å¯¹ä¸èƒ½åŠ  sample_en é—¨æŽ§ï¼key_new åªæœ‰ 1 æ‹å®½ï¼Œ
+        //   è€Œ sample_en æ¯ 288 æ‹æ‰æ¥ä¸€æ¬¡ï¼ŒåŠ é—¨æŽ§åŽ 99.7% çš„æŒ‰é”®ä¼šæ¼æŽ‰ï¼Œ
+        //   last_delta æ°¸è¿œåœåœ¨ 0 â†’ æ»‘éŸ³æ°¸è¿œä¸è§¦å‘ã€‚
+        for (ki = 0; ki < NUM_KEYS; ki = ki + 1)
+            if (key_new[ki]) last_delta <= delta[ki];
+    end
+
+    //------------------------------------------------------------------
+    // NUM_KEYS è·¯ç›¸ä½ç´¯åŠ å™¨
+    //   â˜… ç”¨ dcurï¼ˆæ»‘éŸ³ä¸­çš„å½“å‰é¢‘çŽ‡å­—ï¼‰è€Œä¸æ˜¯ delta
+    //
+    //   â˜…â˜… è¿™é‡ŒåŽŸæ¥ç”¨ sounding_maskï¼ˆ= env != 0ï¼‰é—¨æŽ§ï¼Œæ˜¯é”™çš„ â˜…â˜…
+    //
+    //     åŽŸæ¥çš„å†™æ³•ï¼š
+    //         if (sounding_mask[g]) phase[g] <= phase[g] + inc[g];
+    //         else                  phase[g] <= 32'd0;
+    //
+    //     é—®é¢˜å‡ºåœ¨ã€è¡°å‡å°¾å·´ã€‘ï¼šenv æ˜¯ 8bitï¼ŒRelease é˜¶æ®µ env ä»Ž 1 æŽ‰åˆ° 0
+    //     ä¹‹åŽï¼Œ"æ¾æ‰‹åŽ»æŠ–"é€»è¾‘ä¼šè®©å®ƒä¸€ç›´åœåœ¨ 0ï¼Œæ­¤æ—¶ sounding_mask = 0ï¼Œ
+    //     äºŽæ˜¯ phase è¢«ã€åå¤æ¸…é›¶ã€‘ã€‚è€Œ I2S å’Œæ··éŸ³è¿˜åœ¨è·‘ï¼Œ
+    //     ç»“æžœæ¯ 280 ä¸ªé‡‡æ ·ç‚¹å°±æŠŠæ­£å¼¦æ³¢çš„ç›¸ä½ä»Žä»»æ„ä½ç½®ç¡¬è·³å›ž 0 â€”â€”
+    //     å¬æ„Ÿå°±æ˜¯ï¼š
+    //        Â· å£°éŸ³å˜å¾—å¾ˆä¸è¿žç»­ï¼ˆç›¸ä½åå¤è·³å˜ï¼‰
+    //        Â· ç»“å°¾å‡ºçŽ°ä¸€ä¸ªæ˜Žæ˜¾çš„"æ”¶å°¾å£°"ï¼ˆæœ€åŽä¸€æ¬¡è·³ç›¸ï¼‰
+    //     æ­£ç¡®çš„åšæ³•æ˜¯æ¸å¼±ç„¶åŽæ¶ˆå¤±ï¼ˆåŒ…ç»œè‡ªç„¶è¡°å‡åˆ° 0ï¼‰ã€‚
+    //
+    //     é¡ºå¸¦ä¸€æ env=1..7 æ—¶ sounding_mask ä»æ˜¯ 1ï¼ˆåˆ¤æ®æ˜¯ != 0ï¼‰ï¼Œ
+    //     æ‰€ä»¥çœŸæ­£è¢«æ¸…ç›¸çš„åªæ˜¯ env å·²ç»å½’é›¶çš„é‚£äº›æ‹ã€‚
+    //
+    //   â˜… æ­£ç¡®åšæ³•ï¼ˆçŽ°åœ¨å°±æŒ‰è¿™ä¸ªå†™ï¼‰ï¼š
+    //       Â· éŸ³ç¬¦ã€èµ·å§‹ã€‘æ‰æŠŠç›¸ä½æ¸… 0 â€”â€” éŸ³å¤´ä»Ž sin(0)=0 å¼€å§‹ï¼Œå¹²å‡€ï¼›
+    //       Â· ä¹‹åŽç›¸ä½ã€æŒç»­ç´¯åŠ ã€‘ï¼Œè¡°å‡æœŸé—´ç»ä¸è·³ç›¸ï¼Œ
+    //         éŸ³é‡å®Œå…¨äº¤ç»™åŒ…ç»œï¼ˆæ­£å¼¦ Ã— envï¼‰ï¼Œç»“å°¾è‡ªç„¶æ˜¯æ¸å¼±æ¶ˆå¤±ï¼›
+    //       Â· éŸ³ç¬¦å½»åº•é™éŸ³ï¼ˆsounding_mask=0ï¼Œå³ env å½’ 0ï¼‰åŽç›¸ä½åœåœ¨ 0ï¼Œ
+    //         è¿™æ ·ä¸ä¼šè‡ªå¼•ç”¨ã€ä¹Ÿä¿è¯å¼‚å¸¸çŠ¶æ€ä¸‹èƒ½æ”¶å›žã€‚
+    //------------------------------------------------------------------
+    reg [31:0] phase [0:NUM_KEYS-1];
+
+    // éŸ³ç¬¦èµ·å§‹ï¼ˆå•æ‹è„‰å†²ï¼‰â†’ ç›¸ä½æ¸… 0
+    wire [NUM_KEYS-1:0] phase_rst = key_new;
+
+    genvar g;
+    generate
+        for (g = 0; g < NUM_KEYS; g = g + 1) begin : gen_phase
+            always @(posedge clk_audio) begin
+                if (rst_audio_sync) begin
+                    phase[g] <= 32'd0;
+                    dcur[g]  <= 32'd0;
+                end else begin
+                    // ---- æ»‘éŸ³èµ·ç‚¹ï¼šæŒ‰é”®çž¬é—´è®¾å®š ----
+                    // â˜… è¿™ä¸€æ®µç»å¯¹ä¸èƒ½æ”¾è¿› sample_en é‡Œï¼
+                    //   key_new åªæœ‰ 1 æ‹å®½ï¼Œè€Œ sample_en æ¯ 288 æ‹æ‰æ¥ä¸€æ¬¡ï¼Œ
+                    //   æ”¾è¿›åŽ» 99.7% çš„æŒ‰é”®ä¼šé”™è¿‡åˆå§‹åŒ–ï¼Œdcur å°±ä¸€ç›´ç­‰äºŽ
+                    //   delta[g]ï¼ˆä¸Šç”µåŽæ–œå¡æ—©å°±æŠŠå®ƒæ‹‰åˆ°ä½äº†ï¼‰â†’ å®Œå…¨å¬ä¸åˆ°æ»‘éŸ³ã€‚
+                    if (key_new[g])
+                        // å¼€äº†æ»‘éŸ³å°±ä»Žä¸Šä¸€ä¸ªéŸ³èµ·æ»‘ï¼›å¦åˆ™ç›´æŽ¥å°±ä½ã€‚
+                        // last_delta==0 è¯´æ˜Žåˆšä¸Šç”µè¿˜æ²¡å¼¹è¿‡ï¼Œç›´æŽ¥å°±ä½é¿å…"ä»Ž 0 æ»‘ä¸Šæ¥"
+                        dcur[g] <= (glide_on && (last_delta != 32'd0))
+                                   ? last_delta : delta[g];
+
+                    if (sample_en) begin
+                        // ---- æ»‘éŸ³æ–œå¡ï¼šå‘æœ¬éŸ³é¢‘çŽ‡å­—é è¿‘ ----
+                        // â˜… ç›®æ ‡å¿…é¡»æ˜¯ã€å¸¸æ•°ã€‘delta[g]ï¼
+                        //   ä¸€æ—¦æ”¹æˆè¿è¡Œæ—¶å¯„å­˜å™¨ï¼Œ24 ä¸ªé”®å„è¦ä¸€å¥—çœŸçš„
+                        //   32 ä½åŠ å‡æ³•å™¨ï¼Œå®žæµ‹å¤šçƒ§ 2300 ä¸ª ALUã€‚
+                        //   ç§»è°ƒä¸åœ¨è¿™é‡Œåšï¼Œæ”¾åˆ°åŽé¢çš„ inc[] åŽ»ä¹˜æ¯”ä¾‹ã€‚
+                        if (!key_new[g]) begin
+                            if (dcur[g] < delta[g]) begin
+                                if (dcur[g] + GLIDE_STEP >= delta[g]) dcur[g] <= delta[g];
+                                else                                  dcur[g] <= dcur[g] + GLIDE_STEP;
+                            end else if (dcur[g] > delta[g]) begin
+                                if (dcur[g] - GLIDE_STEP <= delta[g]) dcur[g] <= delta[g];
+                                else                                  dcur[g] <= dcur[g] - GLIDE_STEP;
+                            end
+                        end
+
+                        // ---- ç›¸ä½ç´¯åŠ ï¼ˆç”¨å·²åŠ ç§»è°ƒçš„ inc[]ï¼‰----
+                        //   èµ·å§‹æ¸… 0ï¼ˆéŸ³å¤´å¹²å‡€ï¼‰ï¼Œä¹‹åŽåªç´¯åŠ ã€ç»ä¸è·³ç›¸ã€‚
+                        //   env å½’ 0 åŽæ— éŸ³å¯å‘ï¼ˆdin ä¼šè¢«ç®—æˆ 0ï¼‰ï¼Œ
+                        //   ç›¸ä½æ¯æ‹ +inc ä¼šè‡ªç„¶å›žç»•ï¼Œä¸å½±å“ä»»ä½•ä¸œè¥¿ã€‚
+                        if (phase_rst[g])      phase[g] <= 32'd0;
+                        else                   phase[g] <= phase[g] + inc[g];
+                    end
+                end
+            end
+        end
+    endgenerate
+
+    //------------------------------------------------------------------
+    // NUM_KEYS ä¸ª pROMï¼ˆæ¯ä¸ª 512Ã—32ï¼Œå  1 å— BSRAMï¼‰
+    //
+    //   â˜… ä¸€ä¸ªé‡‡æ ·å‘¨æœŸå†…æŠŠã€åŒä¸€å¼ è¡¨ã€‘è¯» 3 æ¬¡ï¼Œå–åˆ° 4 ä¸ªè°æ³¢ï¼Œ
+    //     æ‰€ä»¥ BSRAM ä»ç„¶æ˜¯ 1 å—/é”®ï¼ˆ24 é”® = 24 å—ï¼Œç¬¬ 3 ç‰‡ç…§æ ·è£…å¾—ä¸‹ï¼‰ã€‚
+    //     åŽŸç†ï¼šä¸€ä¸ªé‡‡æ ·å‘¨æœŸæœ‰ 288 ä¸ªéŸ³é¢‘æ—¶é’Ÿï¼Œè€ŒæŸ¥ä¸€æ¬¡è¡¨åªè¦ 2 æ‹ã€‚
+    //
+    //   è¡¨å†…å®¹ï¼šentry[X] = { sine[X & 0xFF], sine[X >> 1] }
+    //           ï¼ˆç”Ÿæˆ sine_table_packed.mi æ—¶å®šçš„ï¼Œä¸è¦æ”¹è¿™å¼ è¡¨çš„æ ¼å¼ï¼‰
+    //
+    //   è¯»ç›¸ä½ç”± sample_cnt å‰ 3 æ‹å†³å®šï¼ˆcnt=0 é€åœ°å€ï¼Œcnt=1 æ”¶åˆ°æ•°æ®ï¼‰ï¼š
+    //     ç›¸ä½0  X = P[31:23]     ä½ŽåŠå­— = sine[P[31:24]]    = 1 æ¬¡è°æ³¢
+    //                             é«˜åŠå­— = sine[P[30:23]]    = 2 æ¬¡è°æ³¢
+    //     ç›¸ä½1  X = (3P)[31:23]  ä½ŽåŠå­— = sine[(3P)[31:24]] = 3 æ¬¡è°æ³¢
+    //     ç›¸ä½2  X = P[29:21]     ä½ŽåŠå­— = sine[P[29:22]]    = 4 æ¬¡è°æ³¢
+    //                             ï¼ˆå› ä¸º 4P çš„é«˜ 8 ä½æ­£å¥½æ˜¯ P[29:22]ï¼‰
+    //------------------------------------------------------------------
+    // è¯»ç›¸ä½ï¼šæ¯ 2 æ‹ä¸€ä¸ªç›¸ä½
+    //   cnt=0,2,4,6 é€åœ°å€ï¼›cnt=1,3,5,7 æ”¶åˆ°æ•°æ®ï¼ˆROM æœ‰ 1 æ‹å»¶è¿Ÿï¼‰
+    wire [1:0] rdsel = sample_cnt[2:1];
+
+    wire [31:0] rom_dout [0:NUM_KEYS-1];
+
+    generate
+        for (g = 0; g < NUM_KEYS; g = g + 1) begin : gen_rom
+            // 3 å€ç›¸ä½ï¼šç»„åˆç®—ï¼ŒçœæŽ‰ä¸€è·¯ 32 ä½ç´¯åŠ å™¨
+            wire [31:0] p3_g = phase[g] + {phase[g][30:0], 1'b0};
+
+            // â˜… 4 ä¸ªç›¸ä½éƒ½æŠŠç›®æ ‡è°æ³¢æ”¾åœ¨ã€ä½ŽåŠå­—ã€‘ï¼ˆä½ŽåŠå­— = sine[X>>1]ï¼‰ï¼Œ
+            //   æ‰€ä»¥åœ°å€å– X = ç›®æ ‡åœ°å€ << 1ï¼š
+            //     ç›¸ä½0  X = P[31:23]              ä½ŽåŠå­— = 1 æ¬¡è°æ³¢
+            //     ç›¸ä½1  X = {P[30:23], 1'b0}      ä½ŽåŠå­— = 2 æ¬¡è°æ³¢
+            //     ç›¸ä½2  X = {(3P)[31:24], 1'b0}   ä½ŽåŠå­— = 3 æ¬¡è°æ³¢
+            //     ç›¸ä½3  X = {P[29:22], 1'b0}      ä½ŽåŠå­— = 4 æ¬¡è°æ³¢
+            wire [8:0] ad_g = TEST_SINE ? test_phase[31:23] :
+                              (rdsel == 2'd0) ? phase[g][31:23]        :
+                              (rdsel == 2'd1) ? {phase[g][30:23], 1'b0} :
+                              (rdsel == 2'd2) ? {p3_g[31:24],     1'b0} :
+                                                {phase[g][29:22],  1'b0};
+
+            // 60k ç‰ˆï¼šç”¨æŽ¨æ–­ ROMï¼ˆsine_rom.vï¼‰æ›¿ä»£ Gowin_pROM IPï¼Œ
+            //   æ•°æ®ä¸Ž sine_table_packed.mi å®Œå…¨ç›¸åŒï¼ŒåŒæ ·æ˜¯ 1 æ‹è¯»å»¶è¿Ÿã€‚
+            sine_rom u_rom (
+                .clk   (clk_audio),
+                .ad    (ad_g),
+                .dout  (rom_dout[g])
+            );
+        end
+    endgenerate
+
+    //------------------------------------------------------------------
+    // è¯Šæ–­ç”¨æµ‹è¯•æ­£å¼¦ï¼šå–ç¬¬ 0 ä¸ª ROM çš„ä½ŽåŠå­—ï¼ˆ= åŸºæ³¢è¡¨ï¼Œ256 ç‚¹/å‘¨æœŸï¼‰ã€‚
+    //   å¹…åº¦å³ç§» 2 ä½ â†’ æ»¡å¹…çš„ 1/4ï¼Œä¿è¯ä¸å‰Šé¡¶ã€‚
+    //   ï¼ˆç›¸ä½ç´¯åŠ å™¨ test_phase ä¸Ž TEST_SINE å®šä¹‰åœ¨éŸ³é¢‘åŸŸå¼€å¤´ï¼‰
+    //------------------------------------------------------------------
+    wire signed [15:0] test_sine_raw = $signed(rom_dout[0][15:0]);
+    wire signed [15:0] test_sine_sample = (test_sine_raw >>> 2);
+
+    //------------------------------------------------------------------
+    // â˜…é€é”®ä¹˜åŒ…ç»œâ˜…ï¼ˆADSR å°±è½åœ¨è¿™é‡Œï¼‰+ æ¯é”®åªç”¨ 1 ä¸ªä¹˜æ³•å™¨
+    //
+    //   4 ä¸ªè¯»ç›¸ä½æ¯ä¸ªåªå‡ºä¸€ä¸ªè°æ³¢å€¼ï¼ˆéƒ½åœ¨ä½ŽåŠå­—ï¼‰ï¼Œæ‰€ä»¥æ¯ä¸ªç›¸ä½
+    //   åªéœ€è¦ä¹˜ä¸€æ¬¡åŒ…ç»œ â€”â€” åŒä¸€ä¸ªä¹˜æ³•å™¨åœ¨ 4 ä¸ªç›¸ä½ä¸Šå¤ç”¨ã€‚
+    //   24 é”® = 24 ä¸ªä¹˜æ³•å™¨ï¼ˆä¸æ˜¯ 48 ä¸ªï¼‰ï¼ŒDSP å ç”¨ä»Ž"28 ä¸ªç”¨æ»¡ + LUT æº¢å‡º"
+    //   é™åˆ° 24 ä¸ªã€‚
+    //
+    //   â˜… åŒ…ç»œåœ¨ã€è°æ³¢æ··åˆä¹‹å‰ã€‘é€é”®æ–½åŠ ï¼Œæ‰€ä»¥å› å¼åˆ†è§£å®Œå…¨ä¿ç•™ â€”â€”
+    //     åŠ›åº¦ä»ç„¶åªéœ€è¦ 1 ä¸ªå…¨å±€ä¹˜æ³•å™¨ï¼š
+    //         Î£ enváµ¢Â·(h1áµ¢ + cÂ·Háµ¢)  =  Î£ enváµ¢Â·h1áµ¢  +  c Â· Î£ enváµ¢Â·Háµ¢
+    //     ï¼ˆå¦‚æžœæ”¹æˆ"å…ˆæ±‚å’Œå†ä¹˜åŒ…ç»œ"ï¼Œé‚£å˜æˆå…¨å±€åŒ…ç»œï¼Œå°±ä¸æ˜¯é€é”®çš„äº†ï¼‰
+    //
+    //   ä¹˜ç§¯æœ€å¤§ 32767Ã—255 = 8,355,585 < 2^23ï¼Œå–é«˜ 16 ä½å³ Ã·256ã€‚
+    //------------------------------------------------------------------
+    wire signed [15:0] env_a [0:NUM_KEYS-1];   // å½“å‰ç›¸ä½çš„è°æ³¢ Ã— æœ¬é”®åŒ…ç»œ
+
+    generate
+        for (g = 0; g < NUM_KEYS; g = g + 1) begin : gen_unpack
+            wire signed [16:0] s_raw = $signed(rom_dout[g][15:0]);
+            wire signed [23:0] s_p   = s_raw * $signed({1'b0, env[g]});
+            assign env_a[g] = $signed(s_p[23:8]);
+        end
+    endgenerate
+
+    //------------------------------------------------------------------
+    // å½“å‰è¯»ç›¸ä½çš„ã€Œè·¨é”®æ±‚å’Œã€
+    //
+    //   æ¯ä¸ªè¯»ç›¸ä½åªå‡ºä¸€ä¸ªè°æ³¢ï¼ˆéƒ½åœ¨ä½ŽåŠå­—ï¼Œä¸”å·²ä¹˜æœ¬é”®åŒ…ç»œï¼‰ï¼Œ
+    //   æ‰€ä»¥è¿™é‡Œåšä¸€ä¸ªè·¨é”®å’Œï¼Œå†æŒ‰è¯»ç›¸ä½æŠ“è¿› S1~S4ï¼š
+    //     cnt=1 â†’ S1ï¼ˆ1 æ¬¡è°æ³¢ï¼‰   cnt=3 â†’ S2ï¼ˆ2 æ¬¡è°æ³¢ï¼‰
+    //     cnt=5 â†’ S3ï¼ˆ3 æ¬¡è°æ³¢ï¼‰   cnt=7 â†’ S4ï¼ˆ4 æ¬¡è°æ³¢ï¼‰
+    //
+    //   â˜…â˜… å…¨å±€åŠ›åº¦èƒ½åšè¿™ä¹ˆä¾¿å®œï¼Œé çš„æ˜¯å› å¼åˆ†è§£ï¼š
+    //        Î£ enváµ¢Â·(h1áµ¢ + cÂ·Háµ¢)  =  Î£ enváµ¢Â·h1áµ¢  +  c Â· Î£ enváµ¢Â·Háµ¢
+    //      åŠ›åº¦ c å¯¹æ‰€æœ‰é”®ã€æ‰€æœ‰è°æ³¢éƒ½æ˜¯åŒä¸€ä¸ªå€¼ â†’ å…ˆæ±‚å’Œï¼Œæœ€åŽåªä¹˜ä¸€æ¬¡ï¼Œ
+    //      æ‰€ä»¥æ— è®º 24 é”®è¿˜æ˜¯ 36 é”®ã€å‡ ä¸ªè°æ³¢ï¼ŒåŠ›åº¦éƒ½åªè¦ 1 ä¸ªä¹˜æ³•å™¨ã€‚
+    //
+    //   â˜… ç”¨ sounding_mask è€Œä¸æ˜¯ key_mask é—¨æŽ§ï¼š
+    //     å»¶éŸ³å°¾å·´æœŸé—´è¿™ä¸€è·¯å¿…é¡»ç»§ç»­å‚ä¸Žæ··éŸ³ï¼Œå¦åˆ™å°¾å·´ä¼šè¢«æŽæŽ‰ã€‚
+    //
+    //   â˜… å¿…é¡»å†™æˆå•ä¸ªè¡¨è¾¾å¼ï¼ˆç»¼åˆå™¨è‡ªåŠ¨æ­ log2(N) çº§å¹³è¡¡åŠ æ³•æ ‘ï¼‰ï¼Œ
+    //     ç»ä¸èƒ½æ”¹æˆ for å¾ªçŽ¯ä¸²è¡Œç´¯åŠ  â€”â€” é‚£æ ·ä¼šå˜æˆ N çº§ä¸²è¡Œé“¾ï¼Œ
+    //     12.5MHz ä¸‹å¿…ç„¶æ—¶åºè¿ä¾‹ã€‚
+    //   â˜…PAD3-7  ç¬¬ 3 ç‰‡ï¼ˆ[24]~[35]ï¼‰å·²è¿½åŠ 
+    //
+    //   22 ä½è¶³å¤Ÿï¼š36 é”® Ã— 32767 = 1,179,612 < 2^21
+    //------------------------------------------------------------------
+    // ==================================================================
+    // ★★ 优化（数学上完全等价，不改任何功能）★★
+    //
+    //   env_a[g] = (正弦值 × env[g]) >> 8，而 sounding_mask[g] 的定义
+    //   恰好就是 (env[g] != 0)。也就是说：
+    //       env[g] == 0  ->  sounding_mask[g] == 0  且  env_a[g] == 0
+    //   所以原来的每一项
+    //       sounding_mask[g] ? env_a[g] : 22'sd0
+    //   恒等于 env_a[g] 本身 —— 这 36 个 22 位选择器是纯冗余。
+    //   去掉之后：省 36×22 ≈ 790 个 LUT，加法树少一级扇出，
+    //   sounding_mask 的扇出也大幅下降（它只再供 any_key / 屏幕频谱用）。
+    //
+    //   ★ 仍然是【单个表达式】，综合器照样自动搭 log2(N) 级平衡加法树，
+    //     千万不要改成 for 循环串行累加。
+    //   ★ 22 位足够：36 × 32767 = 1,179,612 < 2^21
+    // ==================================================================
+    wire signed [21:0] sum_env =
+        env_a[0]  + env_a[1]  + env_a[2]  + env_a[3]  + env_a[4]  + env_a[5]  +
+        env_a[6]  + env_a[7]  + env_a[8]  + env_a[9]  + env_a[10] + env_a[11] +
+        env_a[12] + env_a[13] + env_a[14] + env_a[15] + env_a[16] + env_a[17] +
+        env_a[18] + env_a[19] + env_a[20] + env_a[21] + env_a[22] + env_a[23] +
+        env_a[24] + env_a[25] + env_a[26] + env_a[27] + env_a[28] + env_a[29] +
+        env_a[30] + env_a[31] + env_a[32] + env_a[33] + env_a[34] + env_a[35];
+
+    //------------------------------------------------------------------
+    // æŒ‰è¯»ç›¸ä½æŠŠè·¨é”®å’ŒæŠ“æˆ 4 ä¸ªè°æ³¢æ€»å’Œ
+    //   S1 = Î£ envÂ·(1 æ¬¡)   S2 = Î£ envÂ·(2 æ¬¡)
+    //   S3 = Î£ envÂ·(3 æ¬¡)   S4 = Î£ envÂ·(4 æ¬¡)
+    //
+    //   â˜… æ¯ä¸ªç´¯åŠ å™¨ä¸€ä¸ªé‡‡æ ·å‘¨æœŸåªå†™ä¸€æ¬¡ï¼Œä¸éœ€è¦æ¸…é›¶ã€‚
+    //   â˜… ç¬¬ 8 æ‹å°±å…¨éƒ¨å°±ç»ªï¼Œä¹‹åŽ 280 æ‹ä¿æŒä¸å˜ â€”â€” æ‰€ä»¥ I2S åœ¨å¸§è¾¹ç•Œ
+    //     æ— è®ºä»€ä¹ˆæ—¶å€™é‡‡ï¼Œæ‹¿åˆ°çš„éƒ½æ˜¯å®Œæ•´å€¼ï¼Œä¸ä¼šé‡‡åˆ°åŠæˆå“ã€‚
+    //------------------------------------------------------------------
+    reg signed [21:0] S1, S2, S3, S4;
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) begin
+            S1 <= 22'sd0; S2 <= 22'sd0; S3 <= 22'sd0; S4 <= 22'sd0;
+        end else begin
+            case (sample_cnt)
+                16'd1: S1 <= sum_env;
+                16'd3: S2 <= sum_env;
+                16'd5: S3 <= sum_env;
+                16'd7: S4 <= sum_env;
+                default: ;
+            endcase
+        end
+    end
+
+    //------------------------------------------------------------------
+    // ç»Ÿè®¡æŒ‰ä¸‹çš„é”®æ•°
+    // â˜… å¿…é¡»å†™æˆ"å•ä¸ªè¡¨è¾¾å¼"è€Œä¸æ˜¯ for å¾ªçŽ¯ç´¯åŠ ï¼š
+    //   for å¾ªçŽ¯ä¼šè¢«ç»¼åˆæˆ N çº§ä¸²è¡ŒåŠ æ³•é“¾ï¼Œ12.5MHz ä¸‹ç›´æŽ¥æ—¶åºè¿ä¾‹ï¼›
+    //   å†™æˆå•ä¸ªè¡¨è¾¾å¼ï¼Œç»¼åˆå™¨ä¼šè‡ªåŠ¨æ­æˆ log2(N) çº§å¹³è¡¡åŠ æ³•æ ‘ã€‚
+    // â˜…PAD3-7  ç¬¬ 3 ç‰‡ï¼ˆkey_mask[24]~key_mask[35]ï¼‰å·²è¿½åŠ 
+    //------------------------------------------------------------------
+    // â˜…â˜… å½’ä¸€åŒ–å¢žç›Šï¼šç”±ã€Œæ•´æ•°ä¸ªæ•°ã€æ”¹æˆã€Œè¿žç»­èƒ½é‡ã€
+    //
+    //   åŽŸæ¥ï¼šn_keys = Î£(env[i] > 8)ï¼Œæ˜¯ä¸ªã€æ•´æ•°ä¸ªæ•°ã€‘ï¼Œå¢žç›Šè¡¨åˆæ˜¯ 6dB ä¸€æ¡£ï¼š
+    //         1 ä¸ªéŸ³ â†’ 64    2 ä¸ªéŸ³ â†’ 32    3~16 ä¸ª â†’ 16 ...
+    //   åŽæžœï¼šå»¶éŸ³å°¾å·´è¡°å‡åˆ°è·¨è¿‡ env=8 çš„é‚£ä¸€æ‹ï¼Œn_keys å°‘ 1ï¼Œå¢žç›Šçž¬é—´ç¿»å€(+6dB)ã€‚
+    //         æ–œå¡åªæœ‰ 0.37msï¼Œç­‰äºŽä¸€ä¸ªå°é˜¶ â€”â€” å¬æ„Ÿå°±æ˜¯"æ­£åœ¨å“çš„é‚£ä¸ªéŸ³åˆè¢«å¼¹äº†ä¸€æ¬¡"ã€‚
+    //         è¿™æ­£æ˜¯"å‰ä¸€ä¸ªéŸ³çš„åŒ…ç»œæ²¡ç»“æŸæ—¶æŒ‰ä¸‹å°±ä¼šè§¦å‘"ï¼š
+    //           æŒ‰ä¸‹æ–°é”®æ—¶æ—§éŸ³ env è¿˜åœ¨ 8 ä»¥ä¸Š â†’ n_keys +1ï¼ˆéŸ³é‡å…ˆè¢«åŽ‹ä½Ž 6dBï¼‰ï¼›
+    //           ç­‰æ—§éŸ³å°¾å·´æŽ‰åˆ° 8 ä»¥ä¸‹     â†’ n_keys -1ï¼ˆå¢žç›Š +6dB è·³å›žåŽ»ï¼‰ã€‚
+    //         é—´éš”é•¿æ—¶æ—§éŸ³ env æ—©å°±æ˜¯ 0ï¼Œæ‰€ä»¥åªæœ‰"è¿žç»­æŒ‰ã€é—´éš”çŸ­"æ‰å¬å¾—åˆ°ã€‚
+    //
+    //   æ”¹æ³•ï¼šæŠŠæ¯ä¸ªé”®çš„åŒ…ç»œã€æŒ‰æ¯”ä¾‹ã€‘è®¡å…¥èƒ½é‡ï¼Œå°¾å·´è¡°å‡æ—¶èƒ½é‡è¿žç»­ä¸‹é™ï¼Œ
+    //         å¢žç›Šè·Ÿç€è¿žç»­ä¸Šå‡ï¼Œå†ä¹Ÿæ²¡æœ‰"æŸä¸€åˆ»çªç„¶è·³ 6dB"ã€‚
+    //           env_sum = Î£ (env[i] >> 5)       æ¯é”® 0~7ï¼Œ36 é”®æœ€å¤§ 252ï¼ˆ8 ä½å¤Ÿï¼‰
+    //         å¢žç›Šå– gain â‰ˆ 64 / max(1, env_sum/7)ï¼Œå¤¹åœ¨ 4~64ã€‚
+    //         å®ƒåœ¨ 1 / 2 / 4 ä¸ªæ»¡å¹…éŸ³ä¸Šä¸ŽåŽŸæ¥çš„æ¡£ä½åŸºæœ¬ä¸€è‡´ï¼ˆ64 / 37 / 16ï¼‰ï¼Œ
+    //         å¹¶ä¸”å§‹ç»ˆæ»¡è¶³é˜²å‰Šé¡¶æ¡ä»¶ gain <= 128/nï¼Œæ¯”åŽŸæ¥çš„æ›²çº¿æ›´å®‰å…¨ã€‚
+    //   â˜…PAD3-7  ç¬¬ 3 ç‰‡ï¼ˆenv[24]~env[35]ï¼‰å·²è¿½åŠ 
+    //------------------------------------------------------------------
+    //==================================================================
+    // feed-forward auto gain (ported from music_test0 V7/V8)
+    //
+    //   G = min(1, C / L),  C = 65280,  L = sum of active envelopes
+    //
+    //   Why the clamp at 1 matters (this was music_test0 V7's bug, and it
+    //   is almost certainly why the old table here produced tail crackle):
+    //     * Without the clamp, a single note gives G = C/env, which cancels
+    //       env out entirely -> the note stops decaying.
+    //     * Worse, in the low-L region the neighbouring table entries differ
+    //       by 30~60%.  Those steps land straight in the output: the envelope
+    //       advances one entry every 8 steps (~46 ms) at the tail, i.e. a
+    //       string of jumps = continuous crackle, worst at the end.
+    //     * With the clamp: L <= 255 (one full-envelope note) -> G is exactly
+    //       1, so that whole region has NO steps at all and the envelope
+    //       decays linearly as intended.  Only L > 255 compresses, and there
+    //       neighbouring entries differ by <= 1.5%.
+    //
+    //   C is chosen so the two regions join at L = 255:
+    //       full-load out = h*C/(256*1024)  ==  single-note h*255/1024
+    //     ->  C = 65280
+    //
+    //   36-key version: L is widened to 14 bits (36 x 255 = 9180 max).
+    //   The table is generated; do NOT hand-edit.
+    //==================================================================
+    wire [13:0] env_load =
+          ((env[0]  > 8'd8) ? {6'b0, env[0]}  : 14'd0)
+        + ((env[1]  > 8'd8) ? {6'b0, env[1]}  : 14'd0)
+        + ((env[2]  > 8'd8) ? {6'b0, env[2]}  : 14'd0)
+        + ((env[3]  > 8'd8) ? {6'b0, env[3]}  : 14'd0)
+        + ((env[4]  > 8'd8) ? {6'b0, env[4]}  : 14'd0)
+        + ((env[5]  > 8'd8) ? {6'b0, env[5]}  : 14'd0)
+        + ((env[6]  > 8'd8) ? {6'b0, env[6]}  : 14'd0)
+        + ((env[7]  > 8'd8) ? {6'b0, env[7]}  : 14'd0)
+        + ((env[8]  > 8'd8) ? {6'b0, env[8]}  : 14'd0)
+        + ((env[9]  > 8'd8) ? {6'b0, env[9]}  : 14'd0)
+        + ((env[10] > 8'd8) ? {6'b0, env[10]} : 14'd0)
+        + ((env[11] > 8'd8) ? {6'b0, env[11]} : 14'd0)
+        + ((env[12] > 8'd8) ? {6'b0, env[12]} : 14'd0)
+        + ((env[13] > 8'd8) ? {6'b0, env[13]} : 14'd0)
+        + ((env[14] > 8'd8) ? {6'b0, env[14]} : 14'd0)
+        + ((env[15] > 8'd8) ? {6'b0, env[15]} : 14'd0)
+        + ((env[16] > 8'd8) ? {6'b0, env[16]} : 14'd0)
+        + ((env[17] > 8'd8) ? {6'b0, env[17]} : 14'd0)
+        + ((env[18] > 8'd8) ? {6'b0, env[18]} : 14'd0)
+        + ((env[19] > 8'd8) ? {6'b0, env[19]} : 14'd0)
+        + ((env[20] > 8'd8) ? {6'b0, env[20]} : 14'd0)
+        + ((env[21] > 8'd8) ? {6'b0, env[21]} : 14'd0)
+        + ((env[22] > 8'd8) ? {6'b0, env[22]} : 14'd0)
+        + ((env[23] > 8'd8) ? {6'b0, env[23]} : 14'd0)
+        + ((env[24] > 8'd8) ? {6'b0, env[24]} : 14'd0)
+        + ((env[25] > 8'd8) ? {6'b0, env[25]} : 14'd0)
+        + ((env[26] > 8'd8) ? {6'b0, env[26]} : 14'd0)
+        + ((env[27] > 8'd8) ? {6'b0, env[27]} : 14'd0)
+        + ((env[28] > 8'd8) ? {6'b0, env[28]} : 14'd0)
+        + ((env[29] > 8'd8) ? {6'b0, env[29]} : 14'd0)
+        + ((env[30] > 8'd8) ? {6'b0, env[30]} : 14'd0)
+        + ((env[31] > 8'd8) ? {6'b0, env[31]} : 14'd0)
+        + ((env[32] > 8'd8) ? {6'b0, env[32]} : 14'd0)
+        + ((env[33] > 8'd8) ? {6'b0, env[33]} : 14'd0)
+        + ((env[34] > 8'd8) ? {6'b0, env[34]} : 14'd0)
+        + ((env[35] > 8'd8) ? {6'b0, env[35]} : 14'd0);
+
+    // gain_lut[k] = min(256, round(65280 / (8k+4)))      (256 = gain 1.0)
+    // index = env_load[13:3]  (512 entries, each covering 8 L values)
+    reg [9:0] gain_lut [0:511];
+    initial begin
+        gain_lut[9'd0] = 10'd256;
+        gain_lut[9'd1] = 10'd256;
+        gain_lut[9'd2] = 10'd256;
+        gain_lut[9'd3] = 10'd256;
+        gain_lut[9'd4] = 10'd256;
+        gain_lut[9'd5] = 10'd256;
+        gain_lut[9'd6] = 10'd256;
+        gain_lut[9'd7] = 10'd256;
+        gain_lut[9'd8] = 10'd256;
+        gain_lut[9'd9] = 10'd256;
+        gain_lut[9'd10] = 10'd256;
+        gain_lut[9'd11] = 10'd256;
+        gain_lut[9'd12] = 10'd256;
+        gain_lut[9'd13] = 10'd256;
+        gain_lut[9'd14] = 10'd256;
+        gain_lut[9'd15] = 10'd256;
+        gain_lut[9'd16] = 10'd256;
+        gain_lut[9'd17] = 10'd256;
+        gain_lut[9'd18] = 10'd256;
+        gain_lut[9'd19] = 10'd256;
+        gain_lut[9'd20] = 10'd256;
+        gain_lut[9'd21] = 10'd256;
+        gain_lut[9'd22] = 10'd256;
+        gain_lut[9'd23] = 10'd256;
+        gain_lut[9'd24] = 10'd256;
+        gain_lut[9'd25] = 10'd256;
+        gain_lut[9'd26] = 10'd256;
+        gain_lut[9'd27] = 10'd256;
+        gain_lut[9'd28] = 10'd256;
+        gain_lut[9'd29] = 10'd256;
+        gain_lut[9'd30] = 10'd256;
+        gain_lut[9'd31] = 10'd256;
+        gain_lut[9'd32] = 10'd251;
+        gain_lut[9'd33] = 10'd244;
+        gain_lut[9'd34] = 10'd237;
+        gain_lut[9'd35] = 10'd230;
+        gain_lut[9'd36] = 10'd224;
+        gain_lut[9'd37] = 10'd218;
+        gain_lut[9'd38] = 10'd212;
+        gain_lut[9'd39] = 10'd207;
+        gain_lut[9'd40] = 10'd201;
+        gain_lut[9'd41] = 10'd197;
+        gain_lut[9'd42] = 10'd192;
+        gain_lut[9'd43] = 10'd188;
+        gain_lut[9'd44] = 10'd183;
+        gain_lut[9'd45] = 10'd179;
+        gain_lut[9'd46] = 10'd175;
+        gain_lut[9'd47] = 10'd172;
+        gain_lut[9'd48] = 10'd168;
+        gain_lut[9'd49] = 10'd165;
+        gain_lut[9'd50] = 10'd162;
+        gain_lut[9'd51] = 10'd158;
+        gain_lut[9'd52] = 10'd155;
+        gain_lut[9'd53] = 10'd153;
+        gain_lut[9'd54] = 10'd150;
+        gain_lut[9'd55] = 10'd147;
+        gain_lut[9'd56] = 10'd144;
+        gain_lut[9'd57] = 10'd142;
+        gain_lut[9'd58] = 10'd139;
+        gain_lut[9'd59] = 10'd137;
+        gain_lut[9'd60] = 10'd135;
+        gain_lut[9'd61] = 10'd133;
+        gain_lut[9'd62] = 10'd131;
+        gain_lut[9'd63] = 10'd129;
+        gain_lut[9'd64] = 10'd127;
+        gain_lut[9'd65] = 10'd125;
+        gain_lut[9'd66] = 10'd123;
+        gain_lut[9'd67] = 10'd121;
+        gain_lut[9'd68] = 10'd119;
+        gain_lut[9'd69] = 10'd117;
+        gain_lut[9'd70] = 10'd116;
+        gain_lut[9'd71] = 10'd114;
+        gain_lut[9'd72] = 10'd113;
+        gain_lut[9'd73] = 10'd111;
+        gain_lut[9'd74] = 10'd110;
+        gain_lut[9'd75] = 10'd108;
+        gain_lut[9'd76] = 10'd107;
+        gain_lut[9'd77] = 10'd105;
+        gain_lut[9'd78] = 10'd104;
+        gain_lut[9'd79] = 10'd103;
+        gain_lut[9'd80] = 10'd101;
+        gain_lut[9'd81] = 10'd100;
+        gain_lut[9'd82] = 10'd99;
+        gain_lut[9'd83] = 10'd98;
+        gain_lut[9'd84] = 10'd97;
+        gain_lut[9'd85] = 10'd95;
+        gain_lut[9'd86] = 10'd94;
+        gain_lut[9'd87] = 10'd93;
+        gain_lut[9'd88] = 10'd92;
+        gain_lut[9'd89] = 10'd91;
+        gain_lut[9'd90] = 10'd90;
+        gain_lut[9'd91] = 10'd89;
+        gain_lut[9'd92] = 10'd88;
+        gain_lut[9'd93] = 10'd87;
+        gain_lut[9'd94] = 10'd86;
+        gain_lut[9'd95] = 10'd85;
+        gain_lut[9'd96] = 10'd85;
+        gain_lut[9'd97] = 10'd84;
+        gain_lut[9'd98] = 10'd83;
+        gain_lut[9'd99] = 10'd82;
+        gain_lut[9'd100] = 10'd81;
+        gain_lut[9'd101] = 10'd80;
+        gain_lut[9'd102] = 10'd80;
+        gain_lut[9'd103] = 10'd79;
+        gain_lut[9'd104] = 10'd78;
+        gain_lut[9'd105] = 10'd77;
+        gain_lut[9'd106] = 10'd77;
+        gain_lut[9'd107] = 10'd76;
+        gain_lut[9'd108] = 10'd75;
+        gain_lut[9'd109] = 10'd75;
+        gain_lut[9'd110] = 10'd74;
+        gain_lut[9'd111] = 10'd73;
+        gain_lut[9'd112] = 10'd73;
+        gain_lut[9'd113] = 10'd72;
+        gain_lut[9'd114] = 10'd71;
+        gain_lut[9'd115] = 10'd71;
+        gain_lut[9'd116] = 10'd70;
+        gain_lut[9'd117] = 10'd69;
+        gain_lut[9'd118] = 10'd69;
+        gain_lut[9'd119] = 10'd68;
+        gain_lut[9'd120] = 10'd68;
+        gain_lut[9'd121] = 10'd67;
+        gain_lut[9'd122] = 10'd67;
+        gain_lut[9'd123] = 10'd66;
+        gain_lut[9'd124] = 10'd66;
+        gain_lut[9'd125] = 10'd65;
+        gain_lut[9'd126] = 10'd65;
+        gain_lut[9'd127] = 10'd64;
+        gain_lut[9'd128] = 10'd64;
+        gain_lut[9'd129] = 10'd63;
+        gain_lut[9'd130] = 10'd63;
+        gain_lut[9'd131] = 10'd62;
+        gain_lut[9'd132] = 10'd62;
+        gain_lut[9'd133] = 10'd61;
+        gain_lut[9'd134] = 10'd61;
+        gain_lut[9'd135] = 10'd60;
+        gain_lut[9'd136] = 10'd60;
+        gain_lut[9'd137] = 10'd59;
+        gain_lut[9'd138] = 10'd59;
+        gain_lut[9'd139] = 10'd58;
+        gain_lut[9'd140] = 10'd58;
+        gain_lut[9'd141] = 10'd58;
+        gain_lut[9'd142] = 10'd57;
+        gain_lut[9'd143] = 10'd57;
+        gain_lut[9'd144] = 10'd56;
+        gain_lut[9'd145] = 10'd56;
+        gain_lut[9'd146] = 10'd56;
+        gain_lut[9'd147] = 10'd55;
+        gain_lut[9'd148] = 10'd55;
+        gain_lut[9'd149] = 10'd55;
+        gain_lut[9'd150] = 10'd54;
+        gain_lut[9'd151] = 10'd54;
+        gain_lut[9'd152] = 10'd54;
+        gain_lut[9'd153] = 10'd53;
+        gain_lut[9'd154] = 10'd53;
+        gain_lut[9'd155] = 10'd52;
+        gain_lut[9'd156] = 10'd52;
+        gain_lut[9'd157] = 10'd52;
+        gain_lut[9'd158] = 10'd51;
+        gain_lut[9'd159] = 10'd51;
+        gain_lut[9'd160] = 10'd51;
+        gain_lut[9'd161] = 10'd51;
+        gain_lut[9'd162] = 10'd50;
+        gain_lut[9'd163] = 10'd50;
+        gain_lut[9'd164] = 10'd50;
+        gain_lut[9'd165] = 10'd49;
+        gain_lut[9'd166] = 10'd49;
+        gain_lut[9'd167] = 10'd49;
+        gain_lut[9'd168] = 10'd48;
+        gain_lut[9'd169] = 10'd48;
+        gain_lut[9'd170] = 10'd48;
+        gain_lut[9'd171] = 10'd48;
+        gain_lut[9'd172] = 10'd47;
+        gain_lut[9'd173] = 10'd47;
+        gain_lut[9'd174] = 10'd47;
+        gain_lut[9'd175] = 10'd46;
+        gain_lut[9'd176] = 10'd46;
+        gain_lut[9'd177] = 10'd46;
+        gain_lut[9'd178] = 10'd46;
+        gain_lut[9'd179] = 10'd45;
+        gain_lut[9'd180] = 10'd45;
+        gain_lut[9'd181] = 10'd45;
+        gain_lut[9'd182] = 10'd45;
+        gain_lut[9'd183] = 10'd44;
+        gain_lut[9'd184] = 10'd44;
+        gain_lut[9'd185] = 10'd44;
+        gain_lut[9'd186] = 10'd44;
+        gain_lut[9'd187] = 10'd44;
+        gain_lut[9'd188] = 10'd43;
+        gain_lut[9'd189] = 10'd43;
+        gain_lut[9'd190] = 10'd43;
+        gain_lut[9'd191] = 10'd43;
+        gain_lut[9'd192] = 10'd42;
+        gain_lut[9'd193] = 10'd42;
+        gain_lut[9'd194] = 10'd42;
+        gain_lut[9'd195] = 10'd42;
+        gain_lut[9'd196] = 10'd42;
+        gain_lut[9'd197] = 10'd41;
+        gain_lut[9'd198] = 10'd41;
+        gain_lut[9'd199] = 10'd41;
+        gain_lut[9'd200] = 10'd41;
+        gain_lut[9'd201] = 10'd40;
+        gain_lut[9'd202] = 10'd40;
+        gain_lut[9'd203] = 10'd40;
+        gain_lut[9'd204] = 10'd40;
+        gain_lut[9'd205] = 10'd40;
+        gain_lut[9'd206] = 10'd40;
+        gain_lut[9'd207] = 10'd39;
+        gain_lut[9'd208] = 10'd39;
+        gain_lut[9'd209] = 10'd39;
+        gain_lut[9'd210] = 10'd39;
+        gain_lut[9'd211] = 10'd39;
+        gain_lut[9'd212] = 10'd38;
+        gain_lut[9'd213] = 10'd38;
+        gain_lut[9'd214] = 10'd38;
+        gain_lut[9'd215] = 10'd38;
+        gain_lut[9'd216] = 10'd38;
+        gain_lut[9'd217] = 10'd38;
+        gain_lut[9'd218] = 10'd37;
+        gain_lut[9'd219] = 10'd37;
+        gain_lut[9'd220] = 10'd37;
+        gain_lut[9'd221] = 10'd37;
+        gain_lut[9'd222] = 10'd37;
+        gain_lut[9'd223] = 10'd37;
+        gain_lut[9'd224] = 10'd36;
+        gain_lut[9'd225] = 10'd36;
+        gain_lut[9'd226] = 10'd36;
+        gain_lut[9'd227] = 10'd36;
+        gain_lut[9'd228] = 10'd36;
+        gain_lut[9'd229] = 10'd36;
+        gain_lut[9'd230] = 10'd35;
+        gain_lut[9'd231] = 10'd35;
+        gain_lut[9'd232] = 10'd35;
+        gain_lut[9'd233] = 10'd35;
+        gain_lut[9'd234] = 10'd35;
+        gain_lut[9'd235] = 10'd35;
+        gain_lut[9'd236] = 10'd35;
+        gain_lut[9'd237] = 10'd34;
+        gain_lut[9'd238] = 10'd34;
+        gain_lut[9'd239] = 10'd34;
+        gain_lut[9'd240] = 10'd34;
+        gain_lut[9'd241] = 10'd34;
+        gain_lut[9'd242] = 10'd34;
+        gain_lut[9'd243] = 10'd34;
+        gain_lut[9'd244] = 10'd33;
+        gain_lut[9'd245] = 10'd33;
+        gain_lut[9'd246] = 10'd33;
+        gain_lut[9'd247] = 10'd33;
+        gain_lut[9'd248] = 10'd33;
+        gain_lut[9'd249] = 10'd33;
+        gain_lut[9'd250] = 10'd33;
+        gain_lut[9'd251] = 10'd32;
+        gain_lut[9'd252] = 10'd32;
+        gain_lut[9'd253] = 10'd32;
+        gain_lut[9'd254] = 10'd32;
+        gain_lut[9'd255] = 10'd32;
+        gain_lut[9'd256] = 10'd32;
+        gain_lut[9'd257] = 10'd32;
+        gain_lut[9'd258] = 10'd32;
+        gain_lut[9'd259] = 10'd31;
+        gain_lut[9'd260] = 10'd31;
+        gain_lut[9'd261] = 10'd31;
+        gain_lut[9'd262] = 10'd31;
+        gain_lut[9'd263] = 10'd31;
+        gain_lut[9'd264] = 10'd31;
+        gain_lut[9'd265] = 10'd31;
+        gain_lut[9'd266] = 10'd31;
+        gain_lut[9'd267] = 10'd31;
+        gain_lut[9'd268] = 10'd30;
+        gain_lut[9'd269] = 10'd30;
+        gain_lut[9'd270] = 10'd30;
+        gain_lut[9'd271] = 10'd30;
+        gain_lut[9'd272] = 10'd30;
+        gain_lut[9'd273] = 10'd30;
+        gain_lut[9'd274] = 10'd30;
+        gain_lut[9'd275] = 10'd30;
+        gain_lut[9'd276] = 10'd30;
+        gain_lut[9'd277] = 10'd29;
+        gain_lut[9'd278] = 10'd29;
+        gain_lut[9'd279] = 10'd29;
+        gain_lut[9'd280] = 10'd29;
+        gain_lut[9'd281] = 10'd29;
+        gain_lut[9'd282] = 10'd29;
+        gain_lut[9'd283] = 10'd29;
+        gain_lut[9'd284] = 10'd29;
+        gain_lut[9'd285] = 10'd29;
+        gain_lut[9'd286] = 10'd28;
+        gain_lut[9'd287] = 10'd28;
+        gain_lut[9'd288] = 10'd28;
+        gain_lut[9'd289] = 10'd28;
+        gain_lut[9'd290] = 10'd28;
+        gain_lut[9'd291] = 10'd28;
+        gain_lut[9'd292] = 10'd28;
+        gain_lut[9'd293] = 10'd28;
+        gain_lut[9'd294] = 10'd28;
+        gain_lut[9'd295] = 10'd28;
+        gain_lut[9'd296] = 10'd28;
+        gain_lut[9'd297] = 10'd27;
+        gain_lut[9'd298] = 10'd27;
+        gain_lut[9'd299] = 10'd27;
+        gain_lut[9'd300] = 10'd27;
+        gain_lut[9'd301] = 10'd27;
+        gain_lut[9'd302] = 10'd27;
+        gain_lut[9'd303] = 10'd27;
+        gain_lut[9'd304] = 10'd27;
+        gain_lut[9'd305] = 10'd27;
+        gain_lut[9'd306] = 10'd27;
+        gain_lut[9'd307] = 10'd27;
+        gain_lut[9'd308] = 10'd26;
+        gain_lut[9'd309] = 10'd26;
+        gain_lut[9'd310] = 10'd26;
+        gain_lut[9'd311] = 10'd26;
+        gain_lut[9'd312] = 10'd26;
+        gain_lut[9'd313] = 10'd26;
+        gain_lut[9'd314] = 10'd26;
+        gain_lut[9'd315] = 10'd26;
+        gain_lut[9'd316] = 10'd26;
+        gain_lut[9'd317] = 10'd26;
+        gain_lut[9'd318] = 10'd26;
+        gain_lut[9'd319] = 10'd26;
+        gain_lut[9'd320] = 10'd25;
+        gain_lut[9'd321] = 10'd25;
+        gain_lut[9'd322] = 10'd25;
+        gain_lut[9'd323] = 10'd25;
+        gain_lut[9'd324] = 10'd25;
+        gain_lut[9'd325] = 10'd25;
+        gain_lut[9'd326] = 10'd25;
+        gain_lut[9'd327] = 10'd25;
+        gain_lut[9'd328] = 10'd25;
+        gain_lut[9'd329] = 10'd25;
+        gain_lut[9'd330] = 10'd25;
+        gain_lut[9'd331] = 10'd25;
+        gain_lut[9'd332] = 10'd25;
+        gain_lut[9'd333] = 10'd24;
+        gain_lut[9'd334] = 10'd24;
+        gain_lut[9'd335] = 10'd24;
+        gain_lut[9'd336] = 10'd24;
+        gain_lut[9'd337] = 10'd24;
+        gain_lut[9'd338] = 10'd24;
+        gain_lut[9'd339] = 10'd24;
+        gain_lut[9'd340] = 10'd24;
+        gain_lut[9'd341] = 10'd24;
+        gain_lut[9'd342] = 10'd24;
+        gain_lut[9'd343] = 10'd24;
+        gain_lut[9'd344] = 10'd24;
+        gain_lut[9'd345] = 10'd24;
+        gain_lut[9'd346] = 10'd24;
+        gain_lut[9'd347] = 10'd23;
+        gain_lut[9'd348] = 10'd23;
+        gain_lut[9'd349] = 10'd23;
+        gain_lut[9'd350] = 10'd23;
+        gain_lut[9'd351] = 10'd23;
+        gain_lut[9'd352] = 10'd23;
+        gain_lut[9'd353] = 10'd23;
+        gain_lut[9'd354] = 10'd23;
+        gain_lut[9'd355] = 10'd23;
+        gain_lut[9'd356] = 10'd23;
+        gain_lut[9'd357] = 10'd23;
+        gain_lut[9'd358] = 10'd23;
+        gain_lut[9'd359] = 10'd23;
+        gain_lut[9'd360] = 10'd23;
+        gain_lut[9'd361] = 10'd23;
+        gain_lut[9'd362] = 10'd23;
+        gain_lut[9'd363] = 10'd22;
+        gain_lut[9'd364] = 10'd22;
+        gain_lut[9'd365] = 10'd22;
+        gain_lut[9'd366] = 10'd22;
+        gain_lut[9'd367] = 10'd22;
+        gain_lut[9'd368] = 10'd22;
+        gain_lut[9'd369] = 10'd22;
+        gain_lut[9'd370] = 10'd22;
+        gain_lut[9'd371] = 10'd22;
+        gain_lut[9'd372] = 10'd22;
+        gain_lut[9'd373] = 10'd22;
+        gain_lut[9'd374] = 10'd22;
+        gain_lut[9'd375] = 10'd22;
+        gain_lut[9'd376] = 10'd22;
+        gain_lut[9'd377] = 10'd22;
+        gain_lut[9'd378] = 10'd22;
+        gain_lut[9'd379] = 10'd22;
+        gain_lut[9'd380] = 10'd21;
+        gain_lut[9'd381] = 10'd21;
+        gain_lut[9'd382] = 10'd21;
+        gain_lut[9'd383] = 10'd21;
+        gain_lut[9'd384] = 10'd21;
+        gain_lut[9'd385] = 10'd21;
+        gain_lut[9'd386] = 10'd21;
+        gain_lut[9'd387] = 10'd21;
+        gain_lut[9'd388] = 10'd21;
+        gain_lut[9'd389] = 10'd21;
+        gain_lut[9'd390] = 10'd21;
+        gain_lut[9'd391] = 10'd21;
+        gain_lut[9'd392] = 10'd21;
+        gain_lut[9'd393] = 10'd21;
+        gain_lut[9'd394] = 10'd21;
+        gain_lut[9'd395] = 10'd21;
+        gain_lut[9'd396] = 10'd21;
+        gain_lut[9'd397] = 10'd21;
+        gain_lut[9'd398] = 10'd20;
+        gain_lut[9'd399] = 10'd20;
+        gain_lut[9'd400] = 10'd20;
+        gain_lut[9'd401] = 10'd20;
+        gain_lut[9'd402] = 10'd20;
+        gain_lut[9'd403] = 10'd20;
+        gain_lut[9'd404] = 10'd20;
+        gain_lut[9'd405] = 10'd20;
+        gain_lut[9'd406] = 10'd20;
+        gain_lut[9'd407] = 10'd20;
+        gain_lut[9'd408] = 10'd20;
+        gain_lut[9'd409] = 10'd20;
+        gain_lut[9'd410] = 10'd20;
+        gain_lut[9'd411] = 10'd20;
+        gain_lut[9'd412] = 10'd20;
+        gain_lut[9'd413] = 10'd20;
+        gain_lut[9'd414] = 10'd20;
+        gain_lut[9'd415] = 10'd20;
+        gain_lut[9'd416] = 10'd20;
+        gain_lut[9'd417] = 10'd20;
+        gain_lut[9'd418] = 10'd19;
+        gain_lut[9'd419] = 10'd19;
+        gain_lut[9'd420] = 10'd19;
+        gain_lut[9'd421] = 10'd19;
+        gain_lut[9'd422] = 10'd19;
+        gain_lut[9'd423] = 10'd19;
+        gain_lut[9'd424] = 10'd19;
+        gain_lut[9'd425] = 10'd19;
+        gain_lut[9'd426] = 10'd19;
+        gain_lut[9'd427] = 10'd19;
+        gain_lut[9'd428] = 10'd19;
+        gain_lut[9'd429] = 10'd19;
+        gain_lut[9'd430] = 10'd19;
+        gain_lut[9'd431] = 10'd19;
+        gain_lut[9'd432] = 10'd19;
+        gain_lut[9'd433] = 10'd19;
+        gain_lut[9'd434] = 10'd19;
+        gain_lut[9'd435] = 10'd19;
+        gain_lut[9'd436] = 10'd19;
+        gain_lut[9'd437] = 10'd19;
+        gain_lut[9'd438] = 10'd19;
+        gain_lut[9'd439] = 10'd19;
+        gain_lut[9'd440] = 10'd19;
+        gain_lut[9'd441] = 10'd18;
+        gain_lut[9'd442] = 10'd18;
+        gain_lut[9'd443] = 10'd18;
+        gain_lut[9'd444] = 10'd18;
+        gain_lut[9'd445] = 10'd18;
+        gain_lut[9'd446] = 10'd18;
+        gain_lut[9'd447] = 10'd18;
+        gain_lut[9'd448] = 10'd18;
+        gain_lut[9'd449] = 10'd18;
+        gain_lut[9'd450] = 10'd18;
+        gain_lut[9'd451] = 10'd18;
+        gain_lut[9'd452] = 10'd18;
+        gain_lut[9'd453] = 10'd18;
+        gain_lut[9'd454] = 10'd18;
+        gain_lut[9'd455] = 10'd18;
+        gain_lut[9'd456] = 10'd18;
+        gain_lut[9'd457] = 10'd18;
+        gain_lut[9'd458] = 10'd18;
+        gain_lut[9'd459] = 10'd18;
+        gain_lut[9'd460] = 10'd18;
+        gain_lut[9'd461] = 10'd18;
+        gain_lut[9'd462] = 10'd18;
+        gain_lut[9'd463] = 10'd18;
+        gain_lut[9'd464] = 10'd18;
+        gain_lut[9'd465] = 10'd18;
+        gain_lut[9'd466] = 10'd17;
+        gain_lut[9'd467] = 10'd17;
+        gain_lut[9'd468] = 10'd17;
+        gain_lut[9'd469] = 10'd17;
+        gain_lut[9'd470] = 10'd17;
+        gain_lut[9'd471] = 10'd17;
+        gain_lut[9'd472] = 10'd17;
+        gain_lut[9'd473] = 10'd17;
+        gain_lut[9'd474] = 10'd17;
+        gain_lut[9'd475] = 10'd17;
+        gain_lut[9'd476] = 10'd17;
+        gain_lut[9'd477] = 10'd17;
+        gain_lut[9'd478] = 10'd17;
+        gain_lut[9'd479] = 10'd17;
+        gain_lut[9'd480] = 10'd17;
+        gain_lut[9'd481] = 10'd17;
+        gain_lut[9'd482] = 10'd17;
+        gain_lut[9'd483] = 10'd17;
+        gain_lut[9'd484] = 10'd17;
+        gain_lut[9'd485] = 10'd17;
+        gain_lut[9'd486] = 10'd17;
+        gain_lut[9'd487] = 10'd17;
+        gain_lut[9'd488] = 10'd17;
+        gain_lut[9'd489] = 10'd17;
+        gain_lut[9'd490] = 10'd17;
+        gain_lut[9'd491] = 10'd17;
+        gain_lut[9'd492] = 10'd17;
+        gain_lut[9'd493] = 10'd17;
+        gain_lut[9'd494] = 10'd17;
+        gain_lut[9'd495] = 10'd16;
+        gain_lut[9'd496] = 10'd16;
+        gain_lut[9'd497] = 10'd16;
+        gain_lut[9'd498] = 10'd16;
+        gain_lut[9'd499] = 10'd16;
+        gain_lut[9'd500] = 10'd16;
+        gain_lut[9'd501] = 10'd16;
+        gain_lut[9'd502] = 10'd16;
+        gain_lut[9'd503] = 10'd16;
+        gain_lut[9'd504] = 10'd16;
+        gain_lut[9'd505] = 10'd16;
+        gain_lut[9'd506] = 10'd16;
+        gain_lut[9'd507] = 10'd16;
+        gain_lut[9'd508] = 10'd16;
+        gain_lut[9'd509] = 10'd16;
+        gain_lut[9'd510] = 10'd16;
+        gain_lut[9'd511] = 10'd16;
+    end
+
+    reg [9:0] gain_k;
+
+    // ------------------------------------------------------------------
+    // ★★ 越界索引修正（唯一一处会改变行为的地方，其实是修 bug）★★
+    //
+    //   env_load 最大 = 36 键 × 255 = 9180，env_load[13:3] 最大 = 1147，
+    //   而 gain_lut 只有 512 项（0~511）—— 11 位的索引会越界，
+    //   综合器丢掉高位后等于"地址绕回表头"，也就是 env_load > 4095 时
+    //   增益会从 16 突然跳回几十甚至 256，多键同时满包络
+    //   （比如延音锁住十几路）时会突然削顶。
+    //   这里把索引钳在 511，与"表尾恒为 16"的设计意图一致。
+    //
+    //   ★ 不想要这一改：把下面 gain_idx 那行的比较去掉，
+    //     直接写 gain_lut[env_load[11:3]] 就行（小和弦下两者完全一样）。
+    // ------------------------------------------------------------------
+    wire [8:0] gain_idx = (env_load[13:3] > 9'd511) ? 9'd511 : env_load[11:3];
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) gain_k <= 10'd256;
+        else                gain_k <= gain_lut[gain_idx];
+    end
+
+    //------------------------------------------------------------------
+    // 音色：按钮切换【谐波数量】—— 只有两种模式
+    //     t=0：只有基波            （无谐波，最干净）
+    //     t=1：基波 + 2 次          （两个谐波，稍亮）
+    //   ★ 按一下【按钮4】在 0/1 之间来回切。
+    //   S1~S4 已经逐键乘过包络，所以这里是"Σ env·h_n"，因式分解依然成立。
+    //   ★ 3 次 / 4 次谐波不再使用（S3/S4 仍照常计算，只是不参与混合，
+    //     综合器会把它们优化掉；如果想让它们彻底消失，可以把采样状态机
+    //     里 S3/S4 的锁存去掉，但没必要动）。
+    //------------------------------------------------------------------
+    wire [1:0] timbre = {1'b0, timbre_audio};
+
+    // ★ 力度 vel_audio (0~255) 决定谐波比例：
+    //     vel=0   -> 系数 0    -> 只有基波，音色柔和
+    //     vel=255 -> 系数 255  -> S2 × 255 / 512 ≈ S2/2，音色明亮
+    //   S2 是 22 位有符号，乘 8 位系数得 30 位，取 >>>9 回到 22 位量级
+    wire signed [29:0] harm_mul   = S2 * $signed({1'b0, vel_audio});
+    // ★ 等价改写：右移不改变表达式位宽（仍是 30 位），原来赋给 23 位变量时
+    //   取的是低 23 位；这里先落到 30 位 wire 再显式取 [22:0]，
+    //   取值完全一致，只是消掉 EX3791 截断告警。
+    wire signed [29:0] harm_shift = harm_mul >>> 9;
+    wire signed [22:0] harm_sum   = timbre[0] ? harm_shift[22:0] : 23'sd0;
+    wire signed [23:0] harm_scaled = harm_sum;
+
+    //------------------------------------------------------------------
+    // 基波 + 谐波混合
+    //   >>> 1 对应原设计末尾那次右移（防溢出）
+    //------------------------------------------------------------------
+    wire signed [23:0] mix_pre = S1 + harm_scaled;
+    wire signed [23:0] mix     = mix_pre >>> 1;
+
+    // 与增益表那一拍读出对齐（gain_k 是寄存输出，晚一拍）
+    reg signed [23:0] mix_r;
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) mix_r <= 24'sd0;
+        else                mix_r <= mix;
+    end
+
+    //------------------------------------------------------------------
+    // 最终增益：mix_r x gain_k >> 10   （>>10 即 /1024）
+    //   C = 65280 与 >>10 是配套的，改一个必须一起改
+    //   （满负荷 = h*65280/(256*1024) = 0.249h，与单音满包络 h*255/1024 对齐）
+    //------------------------------------------------------------------
+    wire signed [33:0] mix_prod = mix_r * $signed({1'b0, gain_k});
+    wire signed [23:0] vol_norm = mix_prod >>> 10;
+
+    //------------------------------------------------------------------
+    // 摇杆 Y 轴 -> 总音量
+    //
+    //   ★★ 这一环是 K44/25K 上原本就有的，被我重写增益级时弄丢了 ★★
+    //      K44 的接法（供对照）：
+    //          localparam [7:0] VOL_MIN = 8'd32;
+    //          wire [7:0]  vol_use   = (vol_audio < VOL_MIN) ? VOL_MIN : vol_audio;
+    //          wire [15:0] gain_prod = gain_t * vol_use;
+    //          wire [7:0]  gain_comb = gain_prod[15:8];
+    //          ... gain_cur 斜坡 ...  输出 = mix * gain_cur
+    //      K44 里 vol_audio 就是通过 gain_t × vol_use 进到输出的。
+    //
+    //   本版改成等效写法：归一化增益 gain_k(上限 256) 直接算完 mix，
+    //   再乘一级音量。这样就【不必再要 gain_cur 斜坡】——
+    //     · gain_k ≤ 256 已由增益表钳住，不会放大；
+    //     · vol_use 也只在 0~255 之间，乘出来不会削顶；
+    //     · 单一乘级 = 单一斜坡，比 K44 的两级串联更干净。
+    //   定标 vol_use/256：255 → 0.996 倍，32 → 0.125 倍（保持 VOL_MIN 下限）。
+    //------------------------------------------------------------------
+    // ★ 总音量固定，不再由摇杆 Y 控制
+    //   摇杆 Y 已经改去驱动"力度"（谐波比例）
+    localparam [7:0] VOL_FIXED = 8'd220;
+
+    //==================================================================
+    // ★★★ 颤音效果器（Tremolo）：慢速幅度调制 AM ★★★
+    //
+    //   加在【自动增益 + 归一化之后】，所以任何音色、任何力度下听感都是
+    //   稳定的"忽明忽暗"，不会和前面的 AGC 打架。
+    //
+    //   ★ 不额外占乘法器：调制量直接扣在原来的 VOL_FIXED 上，
+    //     复用的还是 vol_norm × vol_dyn 那一个乘级。
+    //   ★ 关掉时 trem_amt 稳在 0 -> vol_dyn = VOL_FIXED，
+    //     输出与"没加颤音"时【逐位相同】（不影响原来的声音）。
+    //
+    //   LFO：32 位相位累加器取三角波
+    //        freq = TREM_INC × fs / 2^32 = 439800 × 48828 / 2^32 ≈ 5.0 Hz
+    //        三角波算法：相位最高位选升/降，再看 [30:25] 六位当取值
+    //        （前半周 [30:25] 单调 0→63，后半周取反 63→0，一个来回正好一个周期）
+    //   深度：最大衰减 110 / 220 = 1/2 → -6dB（谷底不会变成完全静音）
+    //   斜坡：trem_amt 每采样点最多动 1，开关时不"咔"（约 2.3ms 淡入淡出）
+    //==================================================================
+    localparam [31:0] TREM_INC   = 32'd439800;   // LFO 约 5.0 Hz
+    localparam [7:0]  TREM_DEPTH = 8'd110;       // 最大衰减量（相对 VOL_FIXED=220）
+
+    reg [31:0] trem_acc;
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) trem_acc <= 32'd0;
+        else if (sample_en) trem_acc <= trem_acc + TREM_INC;
+    end
+
+    // 三角波 0~63~0
+    wire [5:0] trem_tri = trem_acc[31] ? ~trem_acc[30:25] : trem_acc[30:25];
+
+    // 目标衰减量 = tri/64 × DEPTH
+    //  ★★ 这里原来有个位宽陷阱（颤音听不出来的根因）★★
+    //     Verilog 里 a*b 的结果宽度 = max(操作数宽度) 再被赋值左边卡住：
+    //     trem_tri(6位) × 110 最大 6930（要 13 位），但直接写
+    //         wire [7:0] trem_tgt = (trem_tri * TREM_DEPTH) >> 6;
+    //     乘法是在 8 位上下文里做的 → 6930 被截成 18 → >>6 恒为 0/1
+    //     → vol_dyn 只会在 220/219 之间抖 0.5% → 完全听不出来。
+    //     必须先把乘积落到够宽的中间 wire 上再移位。
+    wire [13:0] trem_prod = trem_tri * TREM_DEPTH;   // 14 位上下文，乘积不丢
+    wire [7:0]  trem_tgt  = trem_prod >> 6;
+
+    // 衰减量斜坡：关掉时回 0；打开时追目标值
+    reg [7:0] trem_amt;
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) trem_amt <= 8'd0;
+        else if (sample_en) begin
+            if (!trem_on_audio) begin
+                if (trem_amt != 8'd0)         trem_amt <= trem_amt - 1'b1;
+            end else if (trem_amt < trem_tgt) trem_amt <= trem_amt + 1'b1;
+            else if     (trem_amt > trem_tgt) trem_amt <= trem_amt - 1'b1;
+        end
+    end
+
+    // 颤音后的等效音量：VOL_FIXED 扣掉衰减量（钳住，不出现负数）
+    //   ★ 想让颤音更深：把 TREM_DEPTH 从 110 调大（最大 220 = 谷底静音）
+    //   ★ 想换速度：改 TREM_INC，freq ≈ TREM_INC × 48828 / 2^32
+    wire [7:0] vol_dyn = (trem_amt >= VOL_FIXED) ? 8'd0 : (VOL_FIXED - trem_amt);
+
+    wire signed [31:0] vol_prod = vol_norm * $signed({1'b0, vol_dyn});
+    wire signed [23:0] vol_out  = vol_prod >>> 8;
+
+    //------------------------------------------------------------------
+    // è¾“å‡ºå¯„å­˜å™¨ï¼šç¬¬ 4 æ‹é”å­˜ï¼Œä¹‹åŽæ•´ä¸ªé‡‡æ ·å‘¨æœŸä¿æŒä¸å˜
+    //   ï¼ˆI2S åœ¨å¸§è¾¹ç•Œéšæ—¶é‡‡éƒ½èƒ½æ‹¿åˆ°å®Œæ•´å€¼ï¼Œä¸ä¼šé‡‡åˆ°åŠæˆå“ï¼‰
+    //------------------------------------------------------------------
+    // ★ 干声 = 原来直接写进 sample_vol 的那个值（钳位到 16 位有符号）
+    wire signed [15:0] dry_sample =
+        (vol_out >  23'sd32767) ?  16'sd32767 :
+        (vol_out < -23'sd32768) ? -16'sd32768 :
+                                  vol_out[15:0];
+
+    //==================================================================
+    // ★★★ 延迟效果器（Delay / Echo）：环形缓冲 + 反馈 + 干湿混合 ★★★
+    //   按钮6 开关。最经典的一路回声：
+    //
+    //       干声 ──┬────────────────────────► 输出
+    //              └─►(+)─►[延迟线 L 点]─┬─► ×WET ──┘
+    //                   ▲                │
+    //                   └─── ×FB ◄───────┘
+    //
+    //   ★ 延迟线用 BSRAM 推断（独立写指针 + 读指针寄存器）：
+    //       DLY_LEN = 2^DLY_BITS = 16384 点，16384 / 48828Hz ≈ 335 ms
+    //       16384×16bit = 256Kb → 约 16 块 BSRAM（本设计 118 块，还够）
+    //     ★ 绝对不能写成变址的寄存器数组让综合器当分布式 RAM 展开，
+    //       那样会变成几万个 FF。
+    //   ★ 读地址就取写地址：环形缓冲里最"老"的那一格正是它，
+    //     所以读出来刚好是 L 个采样点之前写进去的值，一个地址就够。
+    //   ★ 上电时 BSRAM 内容未知，所以前 L 个采样点【只写 0】并把
+    //     反馈/湿声全部静音，避免开机把垃圾当回声放出来。
+    //   ★ 反馈只在效果器打开时累积：关掉时缓冲里始终是"纯干声的历史"，
+    //     所以按一下按钮立刻就能听到刚才 335ms 的回声，不用等。
+    //   ★ 关掉时 sample_vol 直接取 dry_sample，与加延迟之前【逐位相同】。
+    //
+    //   想调：
+    //     DLY_BITS 13 -> 8192 点 ≈ 168ms（回声更密），12 -> 84ms
+    //     DLY_FB   大 -> 拖尾更长（96 ≈ 0.375；160 ≈ 0.63 拖很久）
+    //     DLY_WET  大 -> 回声更响（110 ≈ 0.43）
+    //==================================================================
+    localparam integer DLY_BITS = 14;
+    localparam integer DLY_LEN  = 1 << DLY_BITS;
+    localparam [7:0]   DLY_FB   = 8'd96;          // 反馈量 ≈ 0.375
+    localparam [7:0]   DLY_WET  = 8'd110;         // 湿声量 ≈ 0.43
+
+    reg  [15:0]         dly_mem [0:DLY_LEN-1];
+    reg  [DLY_BITS-1:0] dly_wp, dly_rp;
+    reg  signed [15:0]  dly_tap;
+
+    // 上电填充计数：写满一圈之前不算数
+    reg  [DLY_BITS-1:0] dly_fill;
+    wire dly_ready = (dly_fill == {DLY_BITS{1'b1}});
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync)              dly_fill <= {DLY_BITS{1'b0}};
+        else if (sample_en && !dly_ready) dly_fill <= dly_fill + 1'b1;
+    end
+
+    wire signed [15:0] dly_use = dly_ready ? dly_tap : 16'sd0;
+
+    // ★★ 位宽提醒：乘法结果宽度 = max(操作数宽度)，会被左边卡住。
+    //    这里所有乘法的结果都必须先落到 24 位 wire 上（颤音就栽在这上面）。
+    wire signed [23:0] dly_fb_p = dly_use * $signed({1'b0, DLY_FB});   // 24 位上下文
+    wire signed [15:0] dly_fb   = dly_fb_p >>> 8;                       // ≈ tap × 0.375
+    wire signed [16:0] dly_wsum = dry_sample + (dly_on_audio ? dly_fb : 16'sd0);
+    wire signed [15:0] dly_wr   = (dly_wsum >  17'sd32767) ?  16'sd32767 :
+                                  (dly_wsum < -17'sd32768) ? -16'sd32768 :
+                                                              dly_wsum[15:0];
+
+    always @(posedge clk_audio) begin
+        if (sample_en) begin
+            dly_mem[dly_wp] <= dly_ready ? dly_wr : 16'sd0;   // 写端口（含反馈）
+            dly_tap         <= dly_mem[dly_rp];               // 读端口（= L 点之前）
+            dly_wp          <= dly_wp + 1'b1;
+            dly_rp          <= dly_rp + 1'b1;
+        end
+    end
+
+    wire signed [23:0] dly_wet_p = dly_use * $signed({1'b0, DLY_WET});  // 24 位上下文
+    wire signed [15:0] dly_wet   = dly_wet_p >>> 8;                     // ≈ tap × 0.43
+    wire signed [16:0] dly_msum  = dry_sample + dly_wet;
+    wire signed [15:0] dly_mix   = (dly_msum >  17'sd32767) ?  16'sd32767 :
+                                   (dly_msum < -17'sd32768) ? -16'sd32768 :
+                                                               dly_msum[15:0];
+
+    reg signed [15:0] sample_vol;
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) sample_vol <= 16'sd0;
+        else if (TEST_SINE) sample_vol <= test_sine_sample;
+        else if (sample_cnt == 16'd10)
+            sample_vol <= dly_on_audio ? dly_mix : dry_sample;
+    end
+    //==================================================================
+    // ★ 波形显示：把音频采样镜像到 50MHz 域
+    //
+    //   音频域每产生一个新采样（sample_cnt==10 时锁存进 sample_vol），
+    //   就把它推到 wave_send，并翻转 wave_tgl 通知 LCD 域来取。
+    //   LCD 域（50MHz）用翻转沿握手，把每个采样写进一个 512 深的环形缓冲。
+    //==================================================================
+    reg signed [15:0] wave_send;
+    reg               wave_tgl;
+
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            wave_send <= 16'sd0;
+            wave_tgl  <= 1'b0;
+        end else if (sample_cnt == 16'd10) begin
+            wave_send <= sample_vol;
+            wave_tgl  <= ~wave_tgl;
+        end
+    end
+    // â˜… åªè¦è¿˜æœ‰åŒ…ç»œæ²¡è¡°å‡å®Œçš„é€šé“ï¼ŒI2S å°±ä¸èƒ½åœï¼Œ
+    //   å¦åˆ™æ¾å¼€æŒ‰é”®çš„çž¬é—´å»¶éŸ³å°¾å·´ä¼šè¢«ç›´æŽ¥æŽæŽ‰ã€‚
+    wire any_key = |sounding_mask;
+
+    //==================================================================
+    // I2S å‘é€ï¼ˆBCK/LCK/DINï¼‰
+    //   BCLK_HALF / FRAME_DIV / é‡‡æ ·çŽ‡å·²åœ¨ä¸Šé¢ç»Ÿä¸€å®šä¹‰ï¼Œæ­¤å¤„ä¸å†é‡å¤å£°æ˜Ž
+    //==================================================================
+    reg [3:0] bclk_cnt;
+    reg       bclk_r;
+
+    // â˜… è¯Šæ–­ï¼šI2S_SPEC=1 æ—¶æ—¶é’Ÿå¸¸å¼€ï¼ˆä¸å— any_key é—¨æŽ§ï¼‰ï¼Œ
+    //   æ–¹ä¾¿ç”¨ TEST_A/TEST_C å•ç‹¬éªŒè¯ DAC é€šè·¯ã€‚
+    // any_key = |sounding_mask（延音尾巴期间也要继续送，否则尾巴被掐掉）
+    // TEST_SINE 打开时强制常开，方便单独验证 DAC 通路。
+    wire i2s_run = TEST_SINE | (I2S_ALWAYS != 0) | any_key;
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) begin
+            bclk_cnt <= 4'd0;
+            bclk_r   <= 1'b0;
+        end else if (i2s_run) begin
+            if (bclk_cnt >= BCLK_HALF - 1'b1) begin
+                bclk_cnt <= 4'd0;
+                bclk_r   <= ~bclk_r;
+            end else begin
+                bclk_cnt <= bclk_cnt + 1'b1;
+            end
+        end else begin
+            bclk_cnt <= 4'd0;
+            bclk_r   <= 1'b0;
+        end
+    end
+
+    reg bclk_r_d;
+    always @(posedge clk_audio)
+        bclk_r_d <= bclk_r;
+
+    wire bclk_fall = (~bclk_r & bclk_r_d);
+
+    reg [5:0]  i2s_bit_cnt;
+    reg        ws_r;
+    reg        sd_r;
+    reg [31:0] shift_reg;
+
+    // -----------------------------------------------------------------
+    // å¸§å‚æ•°ï¼ˆI2S_SPEC / BCLK_HALF / FRAME_BITS å·²åœ¨éŸ³é¢‘åŸŸå¼€å¤´å®šä¹‰ï¼‰
+    //   48bit å¸§ â†’ å·¦å³å„ 24bit æ§½ï¼ˆå·¦å¯¹é½ 16bit æ•°æ®ï¼‰
+    //   64bit å¸§ â†’ å·¦å³å„ 32bit æ§½ï¼ˆå·¦å¯¹é½ 16bit æ•°æ®ï¼‰
+    // -----------------------------------------------------------------
+    localparam integer I2S_HALF_BITS = FRAME_BITS / 2;
+    localparam integer I2S_LAST_BIT  = FRAME_BITS - 1;
+    localparam integer I2S_HALF_IDX  = I2S_HALF_BITS - 1;
+
+    // -----------------------------------------------------------------
+    // I2S ç§»ä½å‘é€
+    //   â˜… æ•°æ®ä¸€å¾‹ã€å·¦å¯¹é½ã€‘æ”¾åœ¨æ¯å£°é“çš„é«˜ 16 ä½ï¼š
+    //       48bit å¸§ â†’ {sample[15:0], 8'b0}    ï¼ˆå·¦å¯¹é½ 24bit æ§½ï¼Œ16bit æ•°æ®åœ¨é¡¶ï¼‰
+    //       64bit å¸§ â†’ {sample[15:0], 16'b0}   ï¼ˆå·¦å¯¹é½ 32bit æ§½ï¼Œ16bit æ•°æ®åœ¨é¡¶ï¼‰
+    //     PCM5102A æ˜¯ MSB-first + 2's complementï¼Œå–æ¯å£°é“å¼€å¤´è‹¥å¹²ä½ä½œä¸ºæ ·æœ¬ï¼Œ
+    //     æ‰€ä»¥å·¦å¯¹é½æ˜¯æ­£ç¡®åšæ³•ï¼ˆæ•°æ®æ‰‹å†Œå¯¹ 16bit æ•°æ®çš„æ ‡å‡†æŽ¥æ³•ï¼‰ã€‚
+    //   â˜… ç§»ä½å¯„å­˜å™¨å›ºå®š 32 ä½å®½ï¼Œé¿å…ä»¥å‰é‚£ç§
+    //     ã€Œ24 ä½å˜é‡è¢«èµ‹ 32 ä½è¡¨è¾¾å¼ã€çš„æˆªæ–­ï¼ˆEX3791 è­¦å‘Šï¼‰ã€‚
+    //     å‘é€æ—¶ä»Ž bit31 èµ·å·¦ç§»ï¼Œå‰ I2S_HALF_BITS ä½å°±æ˜¯è¯¥å£°é“çš„å†…å®¹ã€‚
+    // -----------------------------------------------------------------
+    // 静音（any_key=0）时送全 0，而不是停时钟
+    wire [31:0] i2s_load = any_key
+                         ? (I2S_SPEC ? {sample_vol[15:0], 16'b0}
+                                     : {sample_vol[15:0],  8'b0})
+                         : 32'd0;
+
+    always @(posedge clk_audio) begin
+        if (rst_audio_sync) begin
+            i2s_bit_cnt <= 6'd0;
+            ws_r        <= 1'b0;
+            sd_r        <= 1'b0;
+            shift_reg   <= 32'd0;
+        end else if (bclk_fall) begin
+            if (i2s_bit_cnt == I2S_LAST_BIT) begin
+                // å·¦å£°é“èµ·ç‚¹
+                i2s_bit_cnt <= 6'd0;
+                ws_r        <= 1'b0;
+                shift_reg   <= {i2s_load[30:0], 1'b0};
+                sd_r        <= i2s_load[31];
+            end else if (i2s_bit_cnt == I2S_HALF_IDX) begin
+                // å³å£°é“èµ·ç‚¹
+                i2s_bit_cnt <= I2S_HALF_BITS[5:0];
+                ws_r        <= 1'b1;
+                shift_reg   <= {i2s_load[30:0], 1'b0};
+                sd_r        <= i2s_load[31];
+            end else begin
+                i2s_bit_cnt <= i2s_bit_cnt + 1'b1;
+                shift_reg   <= {shift_reg[30:0], 1'b0};
+                sd_r        <= shift_reg[30];
+            end
+        end
+    end
+
+    // â˜… TEST_SINE=1'b1 æ—¶ä¸ºè¯Šæ–­æ¨¡å¼ï¼šI2S å¸¸å¼€ã€æ•°æ®å–æµ‹è¯•æ­£å¼¦ã€‚
+    // â˜… æ—¶é’Ÿå¸¸å¼€ï¼ˆI2S_SPEC=1ï¼‰ï¼Œæ•°æ®åœ¨é™éŸ³æ—¶è‡ªç„¶ä¸º 0
+    //   ï¼ˆsample_vol ç”± sounding_mask é—¨æŽ§ç®—å‡º 0ï¼‰ã€‚
+    // ★ I2S_ALWAYS=1 时三根线常开（静音时 DIN 自然是 0）。
+    assign bck = i2s_run ? bclk_r : 1'b0;
+    assign lck = i2s_run ? ws_r   : 1'b0;
+    assign din = i2s_run ? sd_r   : 1'b0;
+
+    //==================================================================
+    // ADS1115ï¼š4 é€šé“ ADC é‡‡é›†
+    //   ä¸Žç”µå­ç´å…±ç”¨ clk_50m / rst_nï¼Œå®Œå…¨ç‹¬ç«‹äºŽ 12.5MHz éŸ³é¢‘åŸŸ
+    //   AIN0/AIN1 é©±åŠ¨ä¸Šé¢çš„"æ‘‡æ†ç§»è°ƒ / æ€»éŸ³é‡"
+    //   ï¼ˆain ä¿¡å·å·²åœ¨å‰é¢"æ‘‡æ†"ä¸€èŠ‚å£°æ˜Žï¼‰
+    //
+    //   â˜… UART ä¸ŠæŠ¥ï¼ˆVOFA+ï¼‰å·²æŒ‰è¦æ±‚æ•´ä½“ç§»é™¤ï¼š
+    //     ä¸²å£å¼•è„š uart_tx å·²ä»Žç«¯å£å’Œ music.cst é‡Œåˆ æŽ‰ï¼Œå¼•è„šç©ºå‡ºæ¥äº†ã€‚
+    //     uart.v / uart_rx.v / uart_tx.v / uart_tx_ads.v è¿™å‡ ä¸ªæ–‡ä»¶
+    //     è¿˜ç•™åœ¨ src\ ç›®å½•é‡Œï¼Œä½†æ²¡æœ‰è¢«å®žä¾‹åŒ–ï¼Œä¸å‚ä¸Žç»¼åˆï¼›
+    //     å“ªå¤©æƒ³æ¢å¤ä¸ŠæŠ¥ï¼Œé‡æ–°æŽ¥ä¸Š uart_tx_ads å³å¯ã€‚
+    //==================================================================
+    ads1115_ctrl u_ads (
+        .clk        (clk_50m),
+        .rst_n      (rst_n),
+        .i2c_scl    (i2c_scl),
+        .i2c_sda    (i2c_sda),
+        .ain0_data  (ain0_data),
+        .ain1_data  (ain1_data),
+        .ain2_data  (ain2_data),
+        .ain3_data  (ain3_data)
+    );
+
+    //==================================================================
+    // Bluetooth + SPI LCD  (ported from the bluetooth project)
+    //
+    //   Clock: clk_50m_ext = PLL CLKOUT1 = 50MHz
+    //     - the original project ran at 100MHz; UART BAUD_DIV was
+    //       changed 10417 -> 5208 so the baud rate stays 9600
+    //       (same 0.004% error as the original)
+    //     - LCD SPI clock is therefore halved (6.25MHz); screen
+    //       content is unchanged, refresh takes about twice as long
+    //     - the audio domain (clk_audio 12.5MHz) is untouched
+    //==================================================================
+
+    // ---- score storage : 256 bytes, written by BT, read by LCD ----
+    wire [7:0]  score_addr;
+    wire        score_we;
+    wire [7:0]  score_waddr;
+    wire [7:0]  score_wdata;
+    reg  [7:0]  score_data;
+    reg  [7:0]  score_mem [0:255];
+
+    always @(posedge clk_50m_ext) begin
+        if (score_we)
+            score_mem[score_waddr] <= score_wdata;
+        score_data <= score_mem[score_addr];
+    end
+
+    // ---- BT packet receiver : writes score, raises play_start ----
+    wire        play_start;
+    wire [7:0]  play_len;
+    wire [3:0]  lcd_state;
+
+    // â˜… æ ‡å‡† MIDI è§£æžå‡ºæ¥çš„æŒ‰é”®æŽ©ç ï¼ˆNote On/Off -> 36 é”®ï¼‰
+    //   å®ƒå°±æ˜¯"æ ‡å‡†çš„ç´é”®å¼¹å¥"ï¼Œæ‰€ä»¥å’Œç‰©ç†ç´é”®ä¸€æ ·ï¼šæ—¢å‘å£°ã€ä¹Ÿä¸Šé¢‘è°±ã€‚
+    wire [35:0] midi_keys;
+    wire [35:0] bt_keys;
+    //==================================================================
+    // â˜… è“ç‰™è‡ªåŠ¨æ¼”å¥
+    //
+    //   è“ç‰™æŠŠéŸ³ç¬¦å­—èŠ‚æµ(0x00~0x23 = 0~35 å·é”®)å†™è¿› score_mem[]ï¼Œ
+    //   æ”¶åˆ° 0xFF åŽ play_start æ‹‰é«˜ã€‚è¿™é‡ŒæŒ‰å›ºå®šèŠ‚æ‹é€ä¸ªè¯»å‡ºéŸ³ç¬¦ï¼Œ
+    //   è½¬æˆ 36 ä½æŒ‰é”®æŽ©ç ï¼Œä¸Žç‰©ç†æŒ‰é”®åˆå¹¶åŽä¸€èµ·é€è¿›å‘å£°é“¾è·¯
+    //   â€”â€” äºŽæ˜¯ç´èƒ½è‡ªå·±å¼¹ï¼Œå±å¹•ä¸Šçš„æŸ±å­ä¹Ÿä¼šè·Ÿç€è·³ã€‚
+    //
+    //   è¯»åœ°å€ç”¨ play_idxï¼Œè€Œ play_idx æ’ä¸º note_idx+1ï¼š
+    //   score_mem æ˜¯åŒæ­¥è¯»ã€æ•°æ®æ™šä¸€æ‹ï¼Œè¿™ä¸ª +1 æ­£å¥½è¡¥å¿ï¼Œ
+    //   æ‰€ä»¥å½“å‰æ‹è¯»åˆ°çš„å°±æ˜¯ note_idx å·çš„éŸ³ç¬¦ï¼ˆä¸æ˜¯ä¸‹ä¸€ä¸ªï¼‰ã€‚
+    //
+    //   èŠ‚æ‹ï¼šAUTO_PLAY_DIV = 0.5 ç§’ä¸€ä¸ªéŸ³ï¼Œæƒ³å¿«æ”¹å°è¿™ä¸ªå¸¸æ•°ã€‚
+    //==================================================================
+    localparam [25:0] AUTO_PLAY_DIV = 26'd25_000_000;   // 50MHz x 0.5s
+
+    reg [5:0]  note_idx;
+    reg [25:0] note_cnt;
+    reg [7:0]  play_idx;
+    reg [35:0] auto_keys;
+    reg        auto_en;        // â˜… åªæœ‰æ”¶åˆ°è¿‡æ•°æ®æ‰ä½¿èƒ½è‡ªåŠ¨æ¼”å¥
+
+    // â˜… play_start æ˜¯ç”µå¹³ä¿æŒçš„ï¼Œå¿…é¡»å–ä¸Šå‡æ²¿ï¼›
+    //   å¦åˆ™æ¯æ‹éƒ½å¤ä½ note_idxï¼Œè‡ªåŠ¨æ¼”å¥ä¼šå¡åœ¨ç¬¬ä¸€ä¸ªéŸ³ã€‚
+    reg        play_start_d;
+    wire       play_start_pulse = play_start & ~play_start_d;
+
+    always @(posedge clk_50m_ext or negedge rst_n) begin
+        if (!rst_n) begin
+            note_idx     <= 6'd0;
+            note_cnt     <= 26'd0;
+            play_idx     <= 8'd0;
+            auto_en      <= 1'b0;
+            play_start_d <= 1'b0;
+        end else begin
+            play_start_d <= play_start;
+
+            // è¯»åœ°å€æ’ä¸º note_idx+1ï¼ˆè¡¥å¿åŒæ­¥è¯»çš„ 1 æ‹å»¶è¿Ÿï¼‰
+            play_idx <= {2'b0, note_idx} + 8'd1;
+
+            if (play_start_pulse) begin
+                // æ–°æ›²è°±åˆ°è¾¾ï¼šåªåœ¨è¿™ä¸€æ‹å¤ä½ä¸€æ¬¡ï¼Œå¹¶ä½¿èƒ½è‡ªåŠ¨æ¼”å¥
+                note_idx <= 6'd0;
+                note_cnt <= 26'd0;
+                auto_en  <= 1'b1;
+            end
+            else if (note_cnt >= AUTO_PLAY_DIV) begin
+                note_cnt <= 26'd0;
+                if (play_len == 8'd0)                  note_idx <= 6'd0;
+                else if (note_idx >= play_len - 1'b1)  note_idx <= 6'd0;   // å¾ªçŽ¯æ¼”å¥
+                else                                   note_idx <= note_idx + 1'b1;
+            end
+            else begin
+                note_cnt <= note_cnt + 1'b1;
+            end
+        end
+    end
+
+    // éŸ³ç¬¦ -> 36 ä½æŒ‰é”®æŽ©ç 
+    // â˜… åªåœ¨ä½¿èƒ½åŽæ‰ç‚¹äº®ï¼šå¦åˆ™ä¸Šç”µæ—¶ note_idx=0 ä¼šè®© 0 å·é”®ï¼ˆç¬¬ä¸€æ ¹æŸ±å­ï¼‰
+    //   æ°¸ä¹…é«˜ç”µå¹³ â€”â€” å±å¹•ä¸Šå°±æ˜¯"00 é‚£æ ¹æŸ±ä¸€ç›´äº®ã€å¯¹åº”ç´é”®æ²¡ååº”"ã€‚
+    always @(*) begin
+        auto_keys = 36'd0;
+        if (auto_en) auto_keys[note_idx] = 1'b1;
+    end
+
+    // â˜… å±å¹•é¢‘è°±ã€åªè·Ÿç‰©ç†ç´é”®èµ°ã€‘
+    //
+    //   å¯¹åº”å…³ç³»ï¼šæŒ‰ç¬¬ i ä¸ªç‰©ç†ç´é”® -> key_levels ç¬¬ (i-1) ä½ -> ç¬¬ (i-1) æ ¹æŸ±å­
+    //   lcd_master é‡Œ bar_key_on = key_levels[play_idx]ã€
+    //              bar_x      = 16 + play_idx*5
+    //   ä¸¤è€…å…±ç”¨ play_idxï¼Œæ‰€ä»¥æŸ±å· = ç´é”®å·ï¼Œä¸¥æ ¼ä¸€ä¸€å¯¹åº”ã€‚
+    //
+    //   â˜… ç»å¯¹ä¸è¦æŠŠ auto_keys å¹¶è¿›æ¥ï¼šè“ç‰™è‡ªåŠ¨æ¼”å¥æ—¶ä¼šç‚¹äº®éŸ³ç¬¦å¯¹åº”çš„æŸ±å­ï¼Œ
+    //     é¢‘è°±å°±ä¸å†æ˜¯"ä½ æŒ‰ä¸‹çš„ç´é”®"äº† â€”â€” è¿™æ­£æ˜¯ä¹‹å‰é¢‘è°±å¯¹ä¸ä¸Šçš„åŽŸå› ã€‚
+    //     è‡ªåŠ¨æ¼”å¥åªå½±å“å‘å£°ï¼ˆè§ä¸‹é¢ auto_keys_aud -> key_maskï¼‰ã€‚
+    // â˜… é¢‘è°±æ¥æº = ç‰©ç†ç´é”® âˆª MIDI éŸ³ç¬¦ï¼ˆä¸¤è€…éƒ½æ˜¯"æ ‡å‡†çš„æŒ‰é”®äº‹ä»¶"ï¼Œä½ç½®ä¸€ä¸€å¯¹åº”ï¼‰
+    //   æ³¨æ„ä¸è¦å¹¶å…¥ auto_keysï¼šå®ƒæ˜¯ç¼“å†²æ’­æ”¾çš„å¸¸é©»éŸ³ç¬¦ï¼Œä¼šè®©æŸ±å­ä¸€ç›´å ç€ã€‚
+    // 屏幕频谱来源 = 物理琴键（去抖后的稳定快照）∪ MIDI 音符
+    //   ★ 用两级同步的 pressed_mask（= ttp229_reader 里 key_stable 的拼接），
+    //     不用自动演奏音符：它是缓冲播放的常驻音符，会让柱子一直占着。
+    //     （原来这里用的是 last_pressed，它只在事件沿更新，显示会抖；
+    //       现在直接跟稳定快照走，和 music_test0 的做法一致。）
+    // ★ 频谱来源 = 音频域真实发声状态（谁 env != 0 谁亮）
+    reg [NUM_KEYS-1:0] sounding_s1, sounding_s2;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) begin
+            sounding_s1 <= {NUM_KEYS{1'b0}};
+            sounding_s2 <= {NUM_KEYS{1'b0}};
+        end else begin
+            sounding_s1 <= sounding_mask;
+            sounding_s2 <= sounding_s1;
+        end
+    end
+    wire [35:0] key_levels = sounding_s2;
+
+    // ---- è‡ªåŠ¨æ¼”å¥éŸ³ç¬¦è·¨åˆ°éŸ³é¢‘åŸŸå‚ä¸Žå‘å£°ï¼ˆä¸¤çº§åŒæ­¥ï¼Œæ…¢ä¿¡å·è¶³å¤Ÿï¼‰----
+    reg [35:0] auto_keys_s1, auto_keys_s2;
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            auto_keys_s1 <= 36'd0;
+            auto_keys_s2 <= 36'd0;
+        end else begin
+            auto_keys_s1 <= auto_keys;
+            auto_keys_s2 <= auto_keys_s1;
+        end
+    end
+    wire [35:0] auto_keys_aud = auto_keys_s2;
+
+    // â˜… MIDI éŸ³ç¬¦è·¨åˆ°éŸ³é¢‘åŸŸå‚ä¸Žå‘å£°ï¼ˆä¸¤çº§åŒæ­¥ï¼Œ50MHz->12.5MHz æ…¢ä¿¡å·è¶³å¤Ÿï¼‰
+    reg [35:0] midi_keys_s1, midi_keys_s2;
+    always @(posedge clk_audio or negedge rst_n) begin
+        if (!rst_n) begin
+            midi_keys_s1 <= 36'd0;
+            midi_keys_s2 <= 36'd0;
+        end else begin
+            midi_keys_s1 <= midi_keys;
+            midi_keys_s2 <= midi_keys_s1;
+        end
+    end
+    wire [35:0] midi_keys_aud = midi_keys_s2;
+
+
+    // å»¶éŸ³é”å­˜ä»ŽéŸ³é¢‘åŸŸåŒæ­¥å›ž 50MHz åŸŸï¼ˆä»…ç”¨äºŽå±å¹•æ˜¾ç¤ºï¼‰
+    reg [NUM_KEYS-1:0] sustain_latch_a_s1, sustain_latch_a_s2;
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) begin
+            sustain_latch_a_s1 <= {NUM_KEYS{1'b0}};
+            sustain_latch_a_s2 <= {NUM_KEYS{1'b0}};
+        end else begin
+            sustain_latch_a_s1 <= sustain_latch_aud;
+            sustain_latch_a_s2 <= sustain_latch_a_s1;
+        end
+    end
+    wire [NUM_KEYS-1:0] sustain_latch_a_sync = sustain_latch_a_s2;
+
+    //==================================================================
+    // ★★ 诊断：按键数据 UART 上报（DIAG_UART）★★
+    //
+    //   DIAG_UART = 1'b1 时，uart_txd 不走 packet_echo，改成每约 0.4s
+    //   发送一行按键状态，ASCII 9600 8N1：
+    //
+    //       M=hhhhhhhhhh K=nn
+
+    //
+    //   M= 后面 10 位十六进制对应 40 位，低 36 位是 pressed_mask
+    //      （bit0 = 琴键1 ... bit35 = 琴键36，高 4 位恒 0）
+    //   K= 是当前按下键的编号 1~36，无键按下时为 '0'
+    //
+    //   用法：串口助手 9600 打开板载调试器那个口，逐个按琴键看 M 的位：
+    //     · 按了键但对应位一直 0 -> TTP229 没读到该键（模式/上拉/接线）
+    //     · 位正常变 1 但没声音   -> 音频侧的问题
+    //   测完改回 1'b0 即恢复原来的 packet_echo。
+    //==================================================================
+    localparam DIAG_UART = 1'b0;   // ★ 走蓝牙乐谱协议（=1 时改成诊断上报，乐谱包不回传）
+
+    // 起帧脉冲（先声明，后面多个 always 都要用）
+    reg  [24:0] dg_cnt;
+    reg         dg_start_r;
+    wire        dg_start = (dg_cnt >= 25'd20_000_000) & ~dg_start_r;
+
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) dg_start_r <= 1'b0;
+        else        dg_start_r <= (dg_cnt >= 25'd20_000_000);
+    end
+
+    // 分频：每约 0.4s 起一帧（50MHz x 0.4s = 20_000_000）
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) dg_cnt <= 25'd0;
+        else if (dg_start) dg_cnt <= 25'd0;
+        else               dg_cnt <= dg_cnt + 1'b1;
+    end
+
+    // 发送节拍：等 uart_tx 应答(wready_o)后再发下一个字节
+    wire        dg_wready;      // ★ 显式声明：原来靠隐式网络，综合日志报 Undeclared symbol
+    reg [4:0] dg_idx;
+    wire dg_firing_now = (dg_idx >= 5'd1) && (dg_idx <= 5'd16);
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) dg_idx <= 5'd0;
+        else if (dg_start) begin
+            dg_idx <= 5'd0;
+        end else if (dg_firing_now && dg_wready) begin
+            dg_idx <= (dg_idx >= 5'd16) ? 5'd17 : (dg_idx + 1'b1);
+        end
+    end
+
+    // 当前按下键的编号（0 = 无）
+    wire [5:0] dg_keynum = pressed_mask[0]  ? 6'd1  : pressed_mask[1]  ? 6'd2  :
+                           pressed_mask[2]  ? 6'd3  : pressed_mask[3]  ? 6'd4  :
+                           pressed_mask[4]  ? 6'd5  : pressed_mask[5]  ? 6'd6  :
+                           pressed_mask[6]  ? 6'd7  : pressed_mask[7]  ? 6'd8  :
+                           pressed_mask[8]  ? 6'd9  : pressed_mask[9]  ? 6'd10 :
+                           pressed_mask[10] ? 6'd11 : pressed_mask[11] ? 6'd12 :
+                           pressed_mask[12] ? 6'd13 : pressed_mask[13] ? 6'd14 :
+                           pressed_mask[14] ? 6'd15 : pressed_mask[15] ? 6'd16 :
+                           pressed_mask[16] ? 6'd17 : pressed_mask[17] ? 6'd18 :
+                           pressed_mask[18] ? 6'd19 : pressed_mask[19] ? 6'd20 :
+                           pressed_mask[20] ? 6'd21 : pressed_mask[21] ? 6'd22 :
+                           pressed_mask[22] ? 6'd23 : pressed_mask[23] ? 6'd24 :
+                           pressed_mask[24] ? 6'd25 : pressed_mask[25] ? 6'd26 :
+                           pressed_mask[26] ? 6'd27 : pressed_mask[27] ? 6'd28 :
+                           pressed_mask[28] ? 6'd29 : pressed_mask[29] ? 6'd30 :
+                           pressed_mask[30] ? 6'd31 : pressed_mask[31] ? 6'd32 :
+                           pressed_mask[32] ? 6'd33 : pressed_mask[33] ? 6'd34 :
+                           pressed_mask[34] ? 6'd35 : pressed_mask[35] ? 6'd36 : 6'd0;
+
+    // 4bit -> 十六进制 ASCII（Verilog 不支持字符串字面量索引，必须用函数）
+    function [7:0] hexasc;
+        input [3:0] v;
+        begin
+            hexasc = (v < 4'd10) ? (8'd48 + {4'b0, v})
+                                 : (8'd55 + {4'b0, v});   // 'A'=65, 65-10=55
+        end
+    endfunction
+
+    wire [7:0] dg_hexhi = hexasc(pressed_mask[35:32]);
+    wire [7:0] dg_hex1  = hexasc(pressed_mask[31:28]);
+    wire [7:0] dg_hex2  = hexasc(pressed_mask[27:24]);
+    wire [7:0] dg_hex3  = hexasc(pressed_mask[23:20]);
+    wire [7:0] dg_hex4  = hexasc(pressed_mask[19:16]);
+    wire [7:0] dg_hex5  = hexasc(pressed_mask[15:12]);
+    wire [7:0] dg_hex6  = hexasc(pressed_mask[11:8]);
+    wire [7:0] dg_hex7  = hexasc(pressed_mask[7:4]);
+    wire [7:0] dg_hex8  = hexasc(pressed_mask[3:0]);
+
+    // 按实际值发送的十位十进制键号（" 0"~"36"）
+    wire [7:0] dg_k10 = (dg_keynum >= 6'd10) ? (8'd48 + ({2'b0, dg_keynum} / 10)) : 8'd32;
+    wire [7:0] dg_k1  = 8'd48 + (dg_keynum % 10);
+
+    reg [7:0] dg_char;
+    always @(*) begin
+        case (dg_idx)
+            5'd1:  dg_char = "M";
+            5'd2:  dg_char = "=";
+            5'd3:  dg_char = dg_hexhi;
+            5'd4:  dg_char = dg_hex1;
+            5'd5:  dg_char = dg_hex2;
+            5'd6:  dg_char = dg_hex3;
+            5'd7:  dg_char = dg_hex4;
+            5'd8:  dg_char = dg_hex5;
+            5'd9:  dg_char = dg_hex6;
+            5'd10: dg_char = dg_hex7;
+            5'd11: dg_char = dg_hex8;
+            5'd12: dg_char = " ";
+            5'd13: dg_char = "K";
+            5'd14: dg_char = "=";
+            5'd15: dg_char = dg_k10;
+            5'd16: dg_char = dg_k1;
+            default: dg_char = 8'h00;
+        endcase
+    end
+
+    wire diag_txd;
+    uart_tx u_diag_tx (
+        .clk      (clk_50m),
+        .rst      (rst_n),
+        .parity_i (2'd0),          // 无校验
+        .wdata_i  (dg_char),
+        .baud_i   (16'd5208),      // 50MHz / 5208 = 9600
+        .wvalid_i (dg_firing_now),
+        .wready_o (dg_wready),
+        .tx_o     (diag_txd)
+    );
+
+    // DIAG_UART=1 -> 诊断上报；=0 -> 原来的 packet_echo
+    wire uart_pkt_txd;
+    assign uart_txd = DIAG_UART ? diag_txd : uart_pkt_txd;
+
+    uart_packet_echo u_uart_packet_echo (
+        .clk         (clk_50m_ext),
+        .rst_n       (rst_n),
+        .uart_rxd    (uart_rxd),
+        .uart_txd    (uart_pkt_txd),
+        .score_we    (score_we),
+        .score_waddr (score_waddr),
+        .score_wdata (score_wdata),
+        .play_start  (play_start),
+        .play_len    (play_len),
+        .midi_keys   (midi_keys),
+        .bt_keys     (bt_keys)        
+    );
+
+    // ---- LCD driver ----
+    lcd_master u_lcd (
+        .sys_clk    (clk_50m_ext),
+        .rst_n      (rst_n),
+        .play_start (play_start),
+        .play_len   (play_len),
+        .score_addr (score_addr),
+        .score_data (score_data),
+        .key_levels (key_levels),
+        .timbre_idx ({1'b0, timbre_50m}),
+
+        // ★ 新增
+        .wave_mode  (wave_mode),
+        .wave_send  (wave_send),
+        .wave_tgl   (wave_tgl),
+
+        .state_out  (lcd_state),
+        .lcd_sck    (lcd_sck),
+        .lcd_mosi   (lcd_mosi),
+        .lcd_dc     (lcd_dc),
+        .lcd_cs     (lcd_cs),
+        .lcd_blk    (lcd_blk)
+    );
+
+    // lcd_state is for debug observation only
+    wire [3:0] lcd_state_unused = lcd_state;
+
+endmodule
