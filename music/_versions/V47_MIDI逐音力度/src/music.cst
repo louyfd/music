@@ -1,0 +1,97 @@
+//Copyright (C)2014-2025 Gowin Semiconductor Corporation.
+//All rights reserved. 
+//File Title: Physical Constraints file
+//Tool Version: V1.9.11.03 Education
+//Part Number: GW5AT-LV60PG484AC1/I0
+//Device: GW5AT-60
+//Device Version: B
+//Created Time: Mon 10 05 21:20:04 2026
+
+IO_LOC "lcd_blk" F19;
+IO_PORT "lcd_blk" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lcd_cs" W20;
+IO_PORT "lcd_cs" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lcd_dc" W19;
+IO_PORT "lcd_dc" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lcd_mosi" F20;
+IO_PORT "lcd_mosi" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lcd_sck" D22;
+IO_PORT "lcd_sck" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "uart_txd" W22;
+IO_PORT "uart_txd" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "led_glide" G11;
+IO_PORT "led_glide" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "led" U12;
+IO_PORT "led" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "din" A15;
+IO_PORT "din" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lck" A16;
+IO_PORT "lck" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "bck" A20;
+IO_PORT "bck" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "scl_btn" E13;
+IO_PORT "scl_btn" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "scl3" B22;
+IO_PORT "scl3" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "scl2" E21;
+IO_PORT "scl2" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "scl" C22;
+IO_PORT "scl" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "i2c_sda" V19;
+IO_PORT "i2c_sda" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "i2c_scl" G22;
+IO_PORT "i2c_scl" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "sdo_btn" E14;
+IO_PORT "sdo_btn" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "sdo3" E18;
+IO_PORT "sdo3" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "sdo2" E22;
+IO_PORT "sdo2" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "sdo" F18;
+IO_PORT "sdo" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "uart_rxd" W21;
+IO_PORT "uart_rxd" IO_TYPE=LVCMOS33 PULL_MODE=NONE BANK_VCCIO=3.3;
+IO_LOC "rst_n" D1;
+IO_PORT "rst_n" IO_TYPE=LVCMOS18 PULL_MODE=UP BANK_VCCIO=1.8;
+IO_LOC "clk_50m" V22;
+IO_PORT "clk_50m" IO_TYPE=LVCMOS33 PULL_MODE=NONE BANK_VCCIO=3.3;
+
+//=============================================================================
+// ★★ V41 新增：LED 演奏指引的第二路 I2C ★★
+//
+//   ★★ 本次只【追加】下面这两组，上面一行都没改 ★★
+//
+//   V17 / W17 在本文件里没有被任何别的端口占用（是空脚），
+//   而且已经【实测确认】：独立工程 D:\...\Documents\60k\LEDs 就是用
+//   这两个脚把 36 颗灯点亮的。
+//
+//   ★ 注意和 ADS1115 那条 I2C 区分开（那是 i2c_scl=G22 / i2c_sda=V19）：
+//       ADS1115（摇杆）: i2c_scl / i2c_sda
+//       LED 指引        : led_scl / led_sda   ← 本节这两根
+//
+//   ★ PULL_MODE=UP：I2C 是开漏总线，这两个脚必须有上拉才有高电平。
+//     板上有外部 4.7k 上拉（独立工程已验证），这里写 UP 只是兜底。
+//=============================================================================
+IO_LOC "led_scl" V17;
+IO_PORT "led_scl" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "led_sda" W17;
+IO_PORT "led_sda" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=8 BANK_VCCIO=3.3;
+
+//=============================================================================
+// ★★ V44 新增：延迟测量测试脚（外部示波器）★★
+//
+//   ★★ 本次只【追加】下面两组，上面一行都没改 ★★
+//
+//   C19 -> lat_key ：琴键端（示波器 CH1）—— FPGA 检测到"有键刚按下"那一拍
+//   C18 -> lat_pcm ：PCM 端（示波器 CH2）—— 样本由 0 变非 0 那一拍
+//   第三通道直接夹喇叭/DAC 模拟输出，不用加脚。
+//
+//   C18 / C19 在本文件里原本没有被任何端口占用（是空脚）。
+//
+//   DRIVE=8：这两个脚只驱动示波器高阻探头，8mA 足够。
+//   PULL_MODE=NONE：它们是【输出】，不需要上下拉（下拉反而让空闲电平不明确）。
+//=============================================================================
+IO_LOC "lat_key" C19;
+IO_PORT "lat_key" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "lat_pcm" C18;
+IO_PORT "lat_pcm" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
